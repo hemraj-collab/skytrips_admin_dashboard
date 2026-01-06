@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getCustomers, Customer } from "@/lib/api/customers";
+import { supabase } from "@/lib/supabase";
+import { Customer } from "@/types";
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -10,23 +11,52 @@ export default function CustomersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   useEffect(() => {
     fetchCustomers();
-  }, [currentPage, pageSize]);
+  }, [currentPage, pageSize, debouncedSearch]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setCurrentPage(1);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   const fetchCustomers = async () => {
     setLoading(true);
     setError(null);
-    const { data, totalCount: count, error: fetchError } = await getCustomers(currentPage, pageSize);
 
-    if (fetchError) {
-      setError(fetchError);
-    } else {
+    try {
+      const from = (currentPage - 1) * pageSize;
+      const to = from + pageSize - 1;
+
+      let query = supabase
+        .from("customers")
+        .select("*", { count: "exact" })
+        .order("id", { ascending: true })
+        .range(from, to);
+
+      if (debouncedSearch) {
+        query = query.or(`firstName.ilike.*${debouncedSearch}*,lastName.ilike.*${debouncedSearch}*,email.ilike.*${debouncedSearch}*,phone.ilike.*${debouncedSearch}*`);
+      }
+
+      const { data, count, error: fetchError } = await query;
+
+      if (fetchError) throw fetchError;
+
       setCustomers(data || []);
-      setTotalCount(count);
+      setTotalCount(count || 0);
+    } catch (err: any) {
+      console.error("Fetch error:", err);
+      setError(err.message || "Failed to fetch customers");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const totalPages = Math.ceil(totalCount / pageSize);
@@ -108,6 +138,8 @@ export default function CustomersPage() {
             className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary focus:ring-1 focus:ring-primary"
             placeholder="Search by name, email, or phone..."
             type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
         <div className="flex gap-4">
