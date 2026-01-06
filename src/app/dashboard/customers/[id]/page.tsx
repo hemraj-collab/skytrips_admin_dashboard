@@ -42,7 +42,9 @@ export default function CustomerDetailsPage() {
       <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-slate-500 font-display">Loading customer details...</p>
+          <p className="text-slate-500 font-display">
+            Loading customer details...
+          </p>
         </div>
       </div>
     );
@@ -65,18 +67,24 @@ export default function CustomerDetailsPage() {
   }
 
   // Parse JSON fields safely
-  const address = typeof customer.address === 'string' ? JSON.parse(customer.address) : (customer.address || {});
-  const passport = typeof customer.passport === 'string' ? JSON.parse(customer.passport) : (customer.passport || {});
+  const address =
+    typeof customer.address === "string"
+      ? JSON.parse(customer.address)
+      : customer.address || {};
+  const passport =
+    typeof customer.passport === "string"
+      ? JSON.parse(customer.passport)
+      : customer.passport || {};
 
   return (
-    <div className="flex flex-col w-full max-h-[90vh] bg-white dark:bg-[#151f2b] rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-700">
-      <div className="flex flex-col border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#151f2b] shrink-0">
+    <div className="flex flex-col w-full max-h-[90vh] bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200">
+      <div className="flex flex-col border-b border-slate-200 bg-white shrink-0">
         <div className="flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold tracking-wider text-slate-500 uppercase">
               Customer Details
             </span>
-            <span className="text-slate-300 dark:text-slate-600">/</span>
+            <span className="text-slate-300">/</span>
             <span className="text-xs font-bold tracking-wider text-primary uppercase">
               ID: {customer.id}
             </span>
@@ -84,16 +92,20 @@ export default function CustomerDetailsPage() {
           <div className="flex gap-2">
             <button
               aria-label="Edit"
-              className="flex items-center justify-center h-9 w-9 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500 dark:text-slate-400"
+              className="flex items-center justify-center h-9 w-9 rounded-full hover:bg-slate-100 transition-colors text-slate-500"
             >
-              <span className="material-symbols-outlined text-[20px]">edit</span>
+              <span className="material-symbols-outlined text-[20px]">
+                edit
+              </span>
             </button>
             <button
               aria-label="Close"
               onClick={() => router.push("/dashboard/customers")}
-              className="flex items-center justify-center h-9 w-9 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500 dark:text-slate-400"
+              className="flex items-center justify-center h-9 w-9 rounded-full hover:bg-slate-100 transition-colors text-slate-500"
             >
-              <span className="material-symbols-outlined text-[22px]">close</span>
+              <span className="material-symbols-outlined text-[22px]">
+                close
+              </span>
             </button>
           </div>
         </div>
@@ -102,7 +114,7 @@ export default function CustomerDetailsPage() {
             <div className="flex gap-5 items-center">
               <div className="relative">
                 <div
-                  className="bg-center bg-no-repeat bg-cover rounded-full h-20 w-20 ring-4 ring-slate-50 dark:ring-slate-800 shadow-sm"
+                  className="bg-center bg-no-repeat bg-cover rounded-full h-20 w-20 ring-4 ring-slate-50 shadow-sm"
                   style={{
                     backgroundImage: `url("https://ui-avatars.com/api/?name=${encodeURIComponent(
                       `${customer.firstName} ${customer.lastName}`
@@ -111,16 +123,16 @@ export default function CustomerDetailsPage() {
                 ></div>
                 {customer.isActive === "true" && (
                   <div
-                    className="absolute bottom-0 right-0 bg-green-500 h-5 w-5 rounded-full border-2 border-white dark:border-[#151f2b]"
+                    className="absolute bottom-0 right-0 bg-green-500 h-5 w-5 rounded-full border-2 border-white"
                     title="Active"
                   ></div>
                 )}
               </div>
               <div className="flex flex-col">
-                <h2 className="text-[#0d131b] dark:text-white text-2xl font-bold leading-tight tracking-tight">
+                <h2 className="text-[#0d131b] text-2xl font-bold leading-tight tracking-tight">
                   {customer.firstName} {customer.lastName}
                 </h2>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-slate-500 dark:text-slate-400 text-sm mt-1">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-slate-500 text-sm mt-1">
                   <div className="flex items-center gap-1">
                     <span className="material-symbols-outlined text-[16px]">
                       mail
@@ -141,7 +153,7 @@ export default function CustomerDetailsPage() {
             </div>
             <div className="flex flex-wrap gap-2 sm:self-center">
               {customer.isActive === "true" && (
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-50 border border-green-200 text-green-700">
                   <span className="material-symbols-outlined text-[14px]">
                     check_circle
                   </span>
@@ -149,21 +161,23 @@ export default function CustomerDetailsPage() {
                 </div>
               )}
               {customer.isVerified === "true" && (
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary dark:text-blue-400">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary">
                   <span className="material-symbols-outlined text-[14px]">
                     verified
                   </span>
                   <span className="text-xs font-semibold">Verified</span>
                 </div>
               )}
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-600">
                 <span className="material-symbols-outlined text-[14px]">
                   flight
                 </span>
-                <span className="text-xs font-semibold">{customer.userType || "Traveler"}</span>
+                <span className="text-xs font-semibold">
+                  {customer.userType || "Traveler"}
+                </span>
               </div>
               {customer.socialProvider === "google" && (
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-600">
                   <span className="material-symbols-outlined text-[14px]">
                     g_mobiledata
                   </span>
@@ -174,13 +188,13 @@ export default function CustomerDetailsPage() {
           </div>
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-slate-50/50 dark:bg-[#101822]">
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-slate-50/50">
         <div className="max-w-5xl mx-auto space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
-              <div className="bg-white dark:bg-[#151f2b] rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-                <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-[#1A2633]">
-                  <h3 className="text-slate-900 dark:text-white text-base font-bold flex items-center gap-2">
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                  <h3 className="text-slate-900 text-base font-bold flex items-center gap-2">
                     <span className="material-symbols-outlined text-primary text-[20px]">
                       person
                     </span>
@@ -193,7 +207,7 @@ export default function CustomerDetailsPage() {
                       <p className="text-slate-500 text-xs font-medium uppercase tracking-wide">
                         First Name
                       </p>
-                      <p className="text-slate-900 dark:text-slate-200 font-medium">
+                      <p className="text-slate-900 font-medium">
                         {customer.firstName}
                       </p>
                     </div>
@@ -201,7 +215,7 @@ export default function CustomerDetailsPage() {
                       <p className="text-slate-500 text-xs font-medium uppercase tracking-wide">
                         Last Name
                       </p>
-                      <p className="text-slate-900 dark:text-slate-200 font-medium">
+                      <p className="text-slate-900 font-medium">
                         {customer.lastName}
                       </p>
                     </div>
@@ -209,7 +223,7 @@ export default function CustomerDetailsPage() {
                       <p className="text-slate-500 text-xs font-medium uppercase tracking-wide">
                         Date of Birth
                       </p>
-                      <p className="text-slate-900 dark:text-slate-200 font-medium">
+                      <p className="text-slate-900 font-medium">
                         {customer.dateOfBirth || "N/A"}
                       </p>
                     </div>
@@ -217,7 +231,7 @@ export default function CustomerDetailsPage() {
                       <p className="text-slate-500 text-xs font-medium uppercase tracking-wide">
                         Gender
                       </p>
-                      <p className="text-slate-900 dark:text-slate-200 font-medium">
+                      <p className="text-slate-900 font-medium">
                         {customer.gender || "N/A"}
                       </p>
                     </div>
@@ -225,7 +239,7 @@ export default function CustomerDetailsPage() {
                       <p className="text-slate-500 text-xs font-medium uppercase tracking-wide">
                         Phone Country Code
                       </p>
-                      <p className="text-slate-900 dark:text-slate-200 font-medium flex items-center gap-2">
+                      <p className="text-slate-900 font-medium flex items-center gap-2">
                         {customer.phoneCountryCode} ({customer.country})
                       </p>
                     </div>
@@ -233,16 +247,16 @@ export default function CustomerDetailsPage() {
                       <p className="text-slate-500 text-xs font-medium uppercase tracking-wide">
                         Nationality
                       </p>
-                      <p className="text-slate-900 dark:text-slate-200 font-medium">
+                      <p className="text-slate-900 font-medium">
                         {customer.country}
                       </p>
                     </div>
                   </div>
                 </div>
               </div>
-              <div className="bg-white dark:bg-[#151f2b] rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-                <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-[#1A2633]">
-                  <h3 className="text-slate-900 dark:text-white text-base font-bold flex items-center gap-2">
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                  <h3 className="text-slate-900 text-base font-bold flex items-center gap-2">
                     <span className="material-symbols-outlined text-primary text-[20px]">
                       home_pin
                     </span>
@@ -260,7 +274,7 @@ export default function CustomerDetailsPage() {
                 </div>
                 <div className="p-0">
                   <div className="flex flex-col md:flex-row">
-                    <div className="w-full md:w-1/3 h-40 md:h-auto bg-slate-100 relative overflow-hidden border-b md:border-b-0 md:border-r border-slate-100 dark:border-slate-800">
+                    <div className="w-full md:w-1/3 h-40 md:h-auto bg-slate-100 relative overflow-hidden border-b md:border-b-0 md:border-r border-slate-100">
                       <div
                         className="absolute inset-0 bg-cover bg-center opacity-80"
                         style={{
@@ -282,7 +296,7 @@ export default function CustomerDetailsPage() {
                           <p className="text-slate-500 text-xs font-medium uppercase tracking-wide">
                             Street Address
                           </p>
-                          <p className="text-slate-900 dark:text-slate-200 font-medium">
+                          <p className="text-slate-900 font-medium">
                             {address.street || "N/A"}
                           </p>
                         </div>
@@ -290,7 +304,7 @@ export default function CustomerDetailsPage() {
                           <p className="text-slate-500 text-xs font-medium uppercase tracking-wide">
                             City
                           </p>
-                          <p className="text-slate-900 dark:text-slate-200 font-medium">
+                          <p className="text-slate-900 font-medium">
                             {address.city || "N/A"}
                           </p>
                         </div>
@@ -298,7 +312,7 @@ export default function CustomerDetailsPage() {
                           <p className="text-slate-500 text-xs font-medium uppercase tracking-wide">
                             State / Province
                           </p>
-                          <p className="text-slate-900 dark:text-slate-200 font-medium">
+                          <p className="text-slate-900 font-medium">
                             {address.state || "N/A"}
                           </p>
                         </div>
@@ -306,7 +320,7 @@ export default function CustomerDetailsPage() {
                           <p className="text-slate-500 text-xs font-medium uppercase tracking-wide">
                             Postal Code
                           </p>
-                          <p className="text-slate-900 dark:text-slate-200 font-medium">
+                          <p className="text-slate-900 font-medium">
                             {address.postalCode || "N/A"}
                           </p>
                         </div>
@@ -314,7 +328,7 @@ export default function CustomerDetailsPage() {
                           <p className="text-slate-500 text-xs font-medium uppercase tracking-wide">
                             Country
                           </p>
-                          <p className="text-slate-900 dark:text-slate-200 font-medium">
+                          <p className="text-slate-900 font-medium">
                             {customer.country}
                           </p>
                         </div>
@@ -323,15 +337,15 @@ export default function CustomerDetailsPage() {
                   </div>
                 </div>
               </div>
-              <div className="bg-white dark:bg-[#151f2b] rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-                <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-[#1A2633]">
-                  <h3 className="text-slate-900 dark:text-white text-base font-bold flex items-center gap-2">
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                  <h3 className="text-slate-900 text-base font-bold flex items-center gap-2">
                     <span className="material-symbols-outlined text-primary text-[20px]">
                       badge
                     </span>
                     Passport Details
                   </h3>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-600">
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-200 text-slate-600 border border-slate-300">
                     CONFIDENTIAL
                   </span>
                 </div>
@@ -342,7 +356,7 @@ export default function CustomerDetailsPage() {
                         Passport Number
                       </p>
                       <div className="flex items-center gap-2">
-                        <p className="text-slate-900 dark:text-slate-200 font-mono font-bold text-lg">
+                        <p className="text-slate-900 font-mono font-bold text-lg">
                           {passport.number || "N/A"}
                         </p>
                         {customer.isVerified === "true" && (
@@ -359,7 +373,7 @@ export default function CustomerDetailsPage() {
                       <p className="text-slate-500 text-xs font-medium uppercase tracking-wide">
                         Issue Country
                       </p>
-                      <p className="text-slate-900 dark:text-slate-200 font-medium flex items-center gap-2">
+                      <p className="text-slate-900 font-medium flex items-center gap-2">
                         {passport.issueCountry || customer.country}
                       </p>
                     </div>
@@ -368,14 +382,15 @@ export default function CustomerDetailsPage() {
                         Expiry Date
                       </p>
                       <div className="flex items-center gap-2">
-                        <p className="text-slate-900 dark:text-slate-200 font-medium">
+                        <p className="text-slate-900 font-medium">
                           {passport.expiryDate || "N/A"}
                         </p>
-                        {passport.expiryDate && new Date(passport.expiryDate) > new Date() && (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800">
-                            VALID
-                          </span>
-                        )}
+                        {passport.expiryDate &&
+                          new Date(passport.expiryDate) > new Date() && (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-green-50 text-green-700 border border-green-200">
+                              VALID
+                            </span>
+                          )}
                       </div>
                     </div>
                   </div>
@@ -383,9 +398,9 @@ export default function CustomerDetailsPage() {
               </div>
             </div>
             <div className="lg:col-span-1 space-y-6">
-              <div className="bg-white dark:bg-[#151f2b] rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-                <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-[#1A2633]">
-                  <h3 className="text-slate-900 dark:text-white text-base font-bold flex items-center gap-2">
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-100 bg-slate-50">
+                  <h3 className="text-slate-900 text-base font-bold flex items-center gap-2">
                     <span className="material-symbols-outlined text-primary text-[20px]">
                       settings
                     </span>
@@ -393,12 +408,12 @@ export default function CustomerDetailsPage() {
                   </h3>
                 </div>
                 <div className="p-5 flex flex-col gap-4">
-                  <div className="flex flex-col gap-1 pb-4 border-b border-slate-100 dark:border-slate-800">
+                  <div className="flex flex-col gap-1 pb-4 border-b border-slate-100">
                     <p className="text-slate-500 text-xs font-medium uppercase tracking-wide">
                       User ID
                     </p>
                     <div className="flex justify-between items-center group cursor-pointer">
-                      <p className="text-slate-900 dark:text-slate-200 font-mono text-sm">
+                      <p className="text-slate-900 font-mono text-sm">
                         u_{customer.id}
                       </p>
                       <span className="material-symbols-outlined text-slate-400 hover:text-primary text-[16px] opacity-0 group-hover:opacity-100 transition-opacity">
@@ -406,15 +421,17 @@ export default function CustomerDetailsPage() {
                       </span>
                     </div>
                   </div>
-                  <div className="flex flex-col gap-1 pb-4 border-b border-slate-100 dark:border-slate-800">
+                  <div className="flex flex-col gap-1 pb-4 border-b border-slate-100">
                     <p className="text-slate-500 text-xs font-medium uppercase tracking-wide">
                       Created At
                     </p>
-                    <p className="text-slate-900 dark:text-slate-200 text-sm">
-                      {customer.created_at ? new Date(customer.created_at).toLocaleDateString() : "N/A"}
+                    <p className="text-slate-900 text-sm">
+                      {customer.created_at
+                        ? new Date(customer.created_at).toLocaleDateString()
+                        : "N/A"}
                     </p>
                   </div>
-                  <div className="flex flex-col gap-1 pb-4 border-b border-slate-100 dark:border-slate-800">
+                  <div className="flex flex-col gap-1 pb-4 border-b border-slate-100">
                     <p className="text-slate-500 text-xs font-medium uppercase tracking-wide">
                       Referral Code
                     </p>
@@ -429,7 +446,7 @@ export default function CustomerDetailsPage() {
                       Social Provider
                     </p>
                     <div className="flex items-center gap-2 mt-1">
-                      <p className="text-slate-900 dark:text-slate-200 text-sm font-medium capitalize">
+                      <p className="text-slate-900 text-sm font-medium capitalize">
                         {customer.socialProvider || "Email"}
                       </p>
                     </div>
@@ -440,7 +457,7 @@ export default function CustomerDetailsPage() {
                     )}
                   </div>
                 </div>
-                <div className="bg-slate-50 dark:bg-[#1A2633] px-5 py-3 border-t border-slate-100 dark:border-slate-800">
+                <div className="bg-slate-50 px-5 py-3 border-t border-slate-100">
                   <div className="flex justify-between items-center">
                     <p className="text-slate-500 text-xs font-medium">
                       Account Status
@@ -452,25 +469,25 @@ export default function CustomerDetailsPage() {
                         checked={customer.isDisabled === "true"}
                         readOnly
                       />
-                      <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-red-300 dark:peer-focus:ring-red-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-red-500"></div>
-                      <span className="ml-2 text-xs font-medium text-slate-900 dark:text-slate-300">
+                      <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-red-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-500"></div>
+                      <span className="ml-2 text-xs font-medium text-slate-900">
                         Disable
                       </span>
                     </label>
                   </div>
                 </div>
               </div>
-              <div className="bg-blue-50 dark:bg-blue-900/10 rounded-xl p-4 border border-blue-100 dark:border-blue-900/30">
-                <h4 className="text-primary dark:text-blue-400 text-sm font-bold mb-2 flex items-center gap-2">
+              <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                <h4 className="text-primary text-sm font-bold mb-2 flex items-center gap-2">
                   <span className="material-symbols-outlined text-[18px]">
                     info
                   </span>
                   Admin Note
                 </h4>
-                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mb-3">
+                <p className="text-slate-600 text-sm leading-relaxed mb-3">
                   System generated account. Details verified by automation.
                 </p>
-                <button className="text-primary dark:text-blue-400 text-xs font-bold hover:underline">
+                <button className="text-primary text-xs font-bold hover:underline">
                   View Ticket History
                 </button>
               </div>
@@ -478,17 +495,19 @@ export default function CustomerDetailsPage() {
           </div>
         </div>
       </div>
-      <div className="border-t border-slate-200 dark:border-slate-800 p-6 bg-white dark:bg-[#151f2b] shrink-0">
+      <div className="border-t border-slate-200 p-6 bg-white shrink-0">
         <div className="flex flex-col-reverse sm:flex-row justify-between items-center gap-4">
           <button
             onClick={() => router.push("/dashboard/customers")}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+            className="w-full sm:w-auto px-5 py-2.5 rounded-lg border border-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-50 transition-colors"
           >
             Close
           </button>
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-            <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 font-bold text-sm hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">
-              <span className="material-symbols-outlined text-[18px]">block</span>
+            <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-red-50 text-red-600 font-bold text-sm hover:bg-red-100 transition-colors">
+              <span className="material-symbols-outlined text-[18px]">
+                block
+              </span>
               Disable Account
             </button>
             <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-white font-bold text-sm hover:bg-blue-600 shadow-lg shadow-blue-500/20 transition-all">
