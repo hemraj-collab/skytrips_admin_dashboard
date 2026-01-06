@@ -1,16 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  getBookings,
-  createBooking,
-  updateBooking,
-  deleteBooking,
-  Booking,
-} from "@/lib/api/bookings";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
+import { Booking } from "@/types";
 import BookingModal from "./BookingModal";
 
 export default function BookingPage() {
+  const router = useRouter();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -20,25 +17,83 @@ export default function BookingPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  const [isViewOnly, setIsViewOnly] = useState(false);
 
   useEffect(() => {
     fetchBookings();
-  }, [currentPage, pageSize]);
+  }, [currentPage, pageSize, debouncedSearch]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setCurrentPage(1); // Reset to first page on search
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   const fetchBookings = async () => {
     setLoading(true);
     setError(null);
 
-    console.log("Fetching bookings for page", currentPage, "with limit", pageSize);
-    const { data, totalCount: count, error: fetchError } = await getBookings(currentPage, pageSize);
+    try {
+      const from = (currentPage - 1) * pageSize;
+      const to = from + pageSize - 1;
 
-    if (fetchError) {
-      setError(fetchError);
-    } else {
+      console.log("Fetching bookings with Supabase SDK", {
+        from,
+        to,
+        search: debouncedSearch,
+      });
+      console.log("Supabase URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
+      console.log("Has Anon Key:", !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+
+      let query = supabase
+        .from("bookings")
+        .select("*", { count: "exact" })
+        .order("id", { ascending: true })
+        .range(from, to);
+
+      if (debouncedSearch) {
+        const isNumeric = /^\d+$/.test(debouncedSearch);
+        let orFilter = `travellerFirstName.ilike.*${debouncedSearch}*,travellerLastName.ilike.*${debouncedSearch}*,origin.eq.${debouncedSearch},destination.eq.${debouncedSearch},PNR.eq.${debouncedSearch}`;
+
+        if (isNumeric) {
+          orFilter += `,id.eq.${debouncedSearch},ticketNumber.ilike.*${debouncedSearch}*`;
+        }
+
+        query = query.or(orFilter);
+      }
+
+      const { data, count, error: fetchError } = await query;
+
+      console.log("Query result:", { data, count, error: fetchError });
+
+      if (fetchError) {
+        console.error("Supabase error details:", {
+          message: fetchError.message,
+          details: fetchError.details,
+          hint: fetchError.hint,
+          code: fetchError.code,
+        });
+        throw fetchError;
+      }
+
       setBookings(data || []);
-      setTotalCount(count);
+      setTotalCount(count || 0);
+      console.log("Successfully loaded bookings:", data?.length || 0);
+    } catch (err: any) {
+      console.error("Fetch error:", err);
+      const errorMessage = err.message || "Failed to fetch bookings";
+      const errorDetails = err.details ? ` - ${err.details}` : "";
+      const errorHint = err.hint ? ` (Hint: ${err.hint})` : "";
+      setError(errorMessage + errorDetails + errorHint);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const totalPages = Math.ceil(totalCount / pageSize);
@@ -53,11 +108,18 @@ export default function BookingPage() {
 
   const handleCreate = () => {
     setEditingBooking(null);
+    setIsViewOnly(false);
     setIsModalOpen(true);
+  };
+
+  const handleView = (booking: Booking) => {
+    // Navigate to booking details page
+    router.push(`/dashboard/booking/${booking.id}`);
   };
 
   const handleEdit = (booking: Booking) => {
     setEditingBooking(booking);
+    setIsViewOnly(false);
     setIsModalOpen(true);
   };
 
@@ -67,43 +129,49 @@ export default function BookingPage() {
     }
 
     setActionLoading(id);
-    const { error: deleteError } = await deleteBooking(id);
+    try {
+      const { error: deleteError } = await supabase
+        .from("bookings")
+        .delete()
+        .eq("id", id);
 
-    if (deleteError) {
-      alert(deleteError);
-    } else {
+      if (deleteError) throw deleteError;
       await fetchBookings();
+    } catch (err: any) {
+      alert(err.message || "Failed to delete booking");
+    } finally {
+      setActionLoading(null);
     }
-    setActionLoading(null);
   };
 
   const handleSave = async (booking: Booking) => {
     setActionLoading(-1);
 
-    if (editingBooking?.id) {
-      // Update
-      const { error: updateError } = await updateBooking(
-        editingBooking.id,
-        booking
-      );
-      if (updateError) {
-        alert(updateError);
-        setActionLoading(null);
-        return;
-      }
-    } else {
-      // Create
-      const { error: createError } = await createBooking(booking);
-      if (createError) {
-        alert(createError);
-        setActionLoading(null);
-        return;
-      }
-    }
+    try {
+      if (editingBooking?.id) {
+        // Update
+        const { error: updateError } = await supabase
+          .from("bookings")
+          .update(booking)
+          .eq("id", editingBooking.id);
 
-    setIsModalOpen(false);
-    setActionLoading(null);
-    await fetchBookings();
+        if (updateError) throw updateError;
+      } else {
+        // Create
+        const { error: createError } = await supabase
+          .from("bookings")
+          .insert([booking]);
+
+        if (createError) throw createError;
+      }
+
+      setIsModalOpen(false);
+      await fetchBookings();
+    } catch (err: any) {
+      alert(err.message || "Failed to save booking");
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -150,7 +218,9 @@ export default function BookingPage() {
         <ol className="flex items-center gap-2">
           <li>Dashboard</li>
           <li>
-            <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+            <span className="material-symbols-outlined text-[16px]">
+              chevron_right
+            </span>
           </li>
           <li className="font-medium text-primary">Bookings</li>
         </ol>
@@ -183,8 +253,10 @@ export default function BookingPage() {
           </span>
           <input
             className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary focus:ring-1 focus:ring-primary"
-            placeholder="Search by Booking ID, Name or Route"
+            placeholder="Search by Name, PNR or Route (Origin/Destination)"
             type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
         <div className="flex gap-4">
@@ -203,9 +275,40 @@ export default function BookingPage() {
         </div>
       </div>
 
+      {/* Error Display */}
+      {error && (
+        <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <span className="material-symbols-outlined text-red-600 mt-0.5">
+              error
+            </span>
+            <div>
+              <h3 className="text-red-800 font-semibold mb-1">
+                Error Loading Bookings
+              </h3>
+              <p className="text-red-700 text-sm">{error}</p>
+              <div className="mt-3 flex gap-2">
+                <button
+                  onClick={fetchBookings}
+                  className="text-sm bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
+                >
+                  Retry
+                </button>
+                <a
+                  href="/dashboard/test-api"
+                  className="text-sm bg-white text-red-600 border border-red-600 px-4 py-2 rounded hover:bg-red-50 transition-colors"
+                >
+                  Run Diagnostics
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Data Table Card */}
       <div className="flex flex-col rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden min-h-[400px]">
-        {bookings.length === 0 ? (
+        {bookings.length === 0 && !error ? (
           <div className="flex-1 p-12 text-center flex flex-col items-center justify-center">
             <p className="text-slate-500 text-lg mb-4 font-display">
               No bookings found
@@ -223,7 +326,9 @@ export default function BookingPage() {
               <thead className="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider text-xs">
                 <tr>
                   <th className="px-6 py-4">S.N</th>
-                  <th className="px-6 py-4">Passenger</th>
+                  <th className="px-6 py-4">First Name</th>
+                  <th className="px-6 py-4">Last Name</th>
+                  <th className="px-6 py-4">Airline</th>
                   <th className="px-6 py-4">Amount</th>
                   <th className="px-6 py-4">Trip Type</th>
                   <th className="px-6 py-4">PNR</th>
@@ -251,12 +356,18 @@ export default function BookingPage() {
                             )}&background=random")`,
                           }}
                         ></div>
-                        <div className="flex flex-col">
-                          <span className="text-slate-900 font-medium text-sm">
-                            {booking.travellerFirstName} {booking.travellerLastName}
-                          </span>
-                        </div>
+                        <span className="text-slate-900 font-medium text-sm">
+                          {booking.travellerFirstName}
+                        </span>
                       </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-slate-900 font-medium text-sm">
+                        {booking.travellerLastName}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-slate-600">{booking.airlines}</span>
                     </td>
                     <td className="px-6 py-4">
                       <span className="text-slate-900 font-semibold">
@@ -264,9 +375,7 @@ export default function BookingPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-slate-600">
-                        {booking.tripType}
-                      </span>
+                      <span className="text-slate-600">{booking.tripType}</span>
                     </td>
                     <td className="px-6 py-4">
                       <span className="bg-blue-50 text-primary px-2 py-1 rounded text-xs font-bold">
@@ -275,38 +384,42 @@ export default function BookingPage() {
                     </td>
                     <td className="px-6 py-4">
                       <span className="text-slate-900">
-                        {booking.IssueDay} {booking.issueMonth} {booking.issueYear}
+                        {booking.IssueDay} {booking.issueMonth}{" "}
+                        {booking.issueYear}
                       </span>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2 text-sm font-medium text-slate-900">
-                        <span className="text-slate-600 font-bold">{booking.origin}</span>
-                        <span className="material-symbols-outlined text-xs text-slate-400">arrow_forward</span>
+                        <span className="text-slate-600 font-bold">
+                          {booking.origin}
+                        </span>
+                        <span className="material-symbols-outlined text-xs text-slate-400">
+                          arrow_forward
+                        </span>
                         {booking.transit && (
                           <>
-                            <span className="text-slate-600 font-bold">{booking.transit}</span>
-                            <span className="material-symbols-outlined text-xs text-slate-400">arrow_forward</span>
+                            <span className="text-slate-600 font-bold">
+                              {booking.transit}
+                            </span>
+                            <span className="material-symbols-outlined text-xs text-slate-400">
+                              arrow_forward
+                            </span>
                           </>
                         )}
-                        <span className="text-slate-600 font-bold">{booking.destination}</span>
+                        <span className="text-slate-600 font-bold">
+                          {booking.destination}
+                        </span>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
-                          onClick={() => handleEdit(booking)}
-                          className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-primary"
+                          onClick={() => handleView(booking)}
+                          className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-primary transition-colors"
+                          title="View Details"
                         >
                           <span className="material-symbols-outlined text-[20px]">
-                            edit
-                          </span>
-                        </button>
-                        <button
-                          onClick={() => handleDelete(booking.id!)}
-                          className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-red-500"
-                        >
-                          <span className="material-symbols-outlined text-[20px]">
-                            delete
+                            visibility
                           </span>
                         </button>
                       </div>
@@ -332,14 +445,12 @@ export default function BookingPage() {
                   {Math.min(currentPage * pageSize, totalCount)}
                 </span>{" "}
                 of{" "}
-                <span className="font-medium text-slate-900">
-                  {totalCount}
-                </span>{" "}
+                <span className="font-medium text-slate-900">{totalCount}</span>{" "}
                 results
               </p>
               <div className="hidden sm:flex items-center gap-2 ml-4 border-l border-slate-100 pl-4">
                 <span className="text-xs text-slate-500">Rows per page:</span>
-                <select 
+                <select
                   value={pageSize}
                   onChange={(e) => {
                     setPageSize(Number(e.target.value));
@@ -353,7 +464,7 @@ export default function BookingPage() {
                 </select>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <nav
                 aria-label="Pagination"
@@ -369,14 +480,20 @@ export default function BookingPage() {
                     chevron_left
                   </span>
                 </button>
-                
+
                 <div className="flex items-center px-4 py-2 text-sm font-semibold text-slate-900 ring-1 ring-inset ring-slate-100">
-                  Page <span className="mx-1 font-bold text-primary">{currentPage}</span> of {totalPages || 1}
+                  Page{" "}
+                  <span className="mx-1 font-bold text-primary">
+                    {currentPage}
+                  </span>{" "}
+                  of {totalPages || 1}
                 </div>
 
                 <button
                   onClick={handleNextPage}
-                  disabled={currentPage === totalPages || totalPages === 0 || loading}
+                  disabled={
+                    currentPage === totalPages || totalPages === 0 || loading
+                  }
                   className="relative inline-flex items-center rounded-r-md px-2 py-2 text-slate-400 ring-1 ring-inset ring-slate-100 hover:bg-slate-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <span className="sr-only">Next</span>
@@ -394,10 +511,11 @@ export default function BookingPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSave={handleSave}
+        onEdit={() => setIsViewOnly(false)}
         booking={editingBooking}
         isLoading={actionLoading === -1}
+        isReadOnly={isViewOnly}
       />
     </div>
   );
 }
-
