@@ -514,36 +514,37 @@ export default function BookingDetailsPage() {
           </div>
 
           {/* Support */}
-          <div className="bg-slate-900 rounded-xl shadow-lg shadow-slate-200 p-6 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 -m-4 size-24 bg-primary/20 rounded-full blur-2xl group-hover:bg-primary/30 transition-all"></div>
-            <h3 className="text-xs font-black text-white uppercase tracking-widest mb-4">
-              Support
-            </h3>
-            <div className="flex items-start gap-4 mb-6">
-              <div className="size-10 bg-white/10 rounded-lg flex items-center justify-center shrink-0">
-                <span className="material-symbols-outlined text-white fill-1">
-                  support_agent
-                </span>
-              </div>
-              <div className="text-sm">
-                <p className="font-bold text-white mb-1">
-                  Need help with this booking?
-                </p>
-                <p className="text-slate-400 leading-relaxed font-medium">
-                  Contact our 24/7 support team for assistance with changes or
-                  cancellations.
-                </p>
-              </div>
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+              <h3 className="text-lg font-bold text-slate-900">Support</h3>
             </div>
-            <Link
-              href="#"
-              className="inline-flex items-center text-sm font-black text-white hover:text-primary transition-colors"
-            >
-              Contact Support
-              <span className="material-symbols-outlined text-sm ml-2 fill-1">
-                arrow_forward
-              </span>
-            </Link>
+            <div className="p-6">
+              <div className="flex items-start gap-4 mb-4">
+                <div className="size-10 bg-primary/10 rounded-lg flex items-center justify-center shrink-0">
+                  <span className="material-symbols-outlined text-primary">
+                    support_agent
+                  </span>
+                </div>
+                <div className="text-sm">
+                  <p className="font-bold text-slate-900 mb-1">
+                    Need help with this booking?
+                  </p>
+                  <p className="text-slate-500 leading-relaxed">
+                    Contact our 24/7 support team for assistance with changes or
+                    cancellations.
+                  </p>
+                </div>
+              </div>
+              <a
+                className="text-sm font-bold text-primary hover:text-blue-600 transition-colors inline-flex items-center gap-1"
+                href="#"
+              >
+                Contact Support
+                <span className="material-symbols-outlined text-sm">
+                  arrow_forward
+                </span>
+              </a>
+            </div>
           </div>
         </div>
       </div>
