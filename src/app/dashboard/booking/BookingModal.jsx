@@ -61,7 +61,9 @@ export default function BookingModal({
       pickup: "0.00",
       dropoff: "0.00",
       luggage: "0.00",
-    }
+    },
+    customerType: "existing",
+    contactType: "existing",
   });
 
   useEffect(() => {
@@ -76,6 +78,8 @@ export default function BookingModal({
         issueYear: booking.issueYear || "",
         buyingPrice: booking.buyingPrice || "0.00",
         payment: booking.payment || "Pending",
+        customerType: booking.customerType || "existing",
+        contactType: booking.contactType || "existing",
       }));
     } else {
       // Reset for new booking
@@ -127,7 +131,9 @@ export default function BookingModal({
           pickup: "0.00",
           dropoff: "0.00",
           luggage: "0.00",
-        }
+        },
+        customerType: "existing",
+        contactType: "existing",
       });
     }
   }, [booking, isOpen]);
@@ -137,15 +143,32 @@ export default function BookingModal({
   const handleChange = (e) => {
     if (isReadOnly) return;
     const { name, value, type, checked } = e.target;
+    
     if (type === "checkbox" && name.startsWith("addon-")) {
       const addonName = name.replace("addon-", "");
       setFormData((prev) => ({
         ...prev,
         addons: { ...prev.addons, [addonName]: checked },
       }));
+    } else if (name.startsWith("price-")) {
+      const priceName = name.replace("price-", "");
+      setFormData((prev) => ({
+        ...prev,
+        prices: { ...prev.prices, [priceName]: value },
+      }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
+  };
+
+  const calculateAddonsTotal = () => {
+    return Object.values(formData.prices || {}).reduce((acc, price) => acc + (parseFloat(price) || 0), 0).toFixed(2);
+  };
+
+  const calculateGrandTotal = () => {
+    const sellingPrice = parseFloat(formData.sellingPrice) || 0;
+    const addonsTotal = parseFloat(calculateAddonsTotal()) || 0;
+    return (sellingPrice + addonsTotal).toFixed(2);
   };
 
   const handleSubmit = (e) => {
@@ -167,6 +190,8 @@ export default function BookingModal({
       issueYear: formData.issueYear || new Date().getFullYear() + "",
       buyingPrice: formData.buyingPrice,
       payment: formData.paymentStatus, // Or use formData.payment
+      customerType: formData.customerType,
+      contactType: formData.contactType,
     };
     onSave(bookingToSave);
   };
@@ -196,7 +221,7 @@ export default function BookingModal({
               onClick={onClose}
               className="p-2 text-gray-400 hover:text-gray-500 transition-colors"
             >
-              <span className="material-icons-outlined text-2xl">close</span>
+              <span className="material-symbols-outlined text-2xl">close</span>
             </button>
           </div>
         </header>
@@ -209,187 +234,263 @@ export default function BookingModal({
                 {/* Left Columns (Main Form) */}
                 <div className="lg:col-span-2 space-y-6">
                   {/* Customer Contact Details */}
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-                      <h3 className="text-lg font-medium text-gray-900 flex items-center">
-                        <span className="material-icons-outlined text-gray-400 mr-2">contact_mail</span>
+                  <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition-all hover:shadow-md">
+                    <div className="px-8 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                      <h3 className="text-lg font-bold text-slate-900 flex items-center tracking-tight">
+                        <span className="material-symbols-outlined text-primary mr-3">contact_mail</span>
                         Customer Contact Details
                       </h3>
                     </div>
-                    <div className="p-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                          <div className="relative rounded-md shadow-sm">
-                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                              <span className="material-icons-outlined text-gray-400 text-sm">email</span>
+                    <div className="p-8">
+                      <div className="mb-8 p-6 bg-slate-50/50 rounded-xl border border-slate-100">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-6">
+                          <div className="flex items-center gap-4 w-full sm:w-auto">
+                            <div className="flex items-center h-6">
+                              <input 
+                                checked={formData.contactType === 'existing'} 
+                                onChange={() => setFormData(prev => ({ ...prev, contactType: 'existing' }))}
+                                className="focus:ring-primary h-5 w-5 text-primary border-slate-300 cursor-pointer" 
+                                id="existing-contact" 
+                                name="contact-type" 
+                                type="radio" 
+                                value="existing"
+                              />
                             </div>
-                            <input 
-                              className="block w-full rounded-md border-gray-300 pl-10 focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50 sm:text-sm" 
-                              name="email" 
-                              type="email" 
-                              value={formData.email}
-                              onChange={handleChange}
-                              disabled={isReadOnly}
-                            />
+                            <label className="font-bold text-slate-700 text-sm whitespace-nowrap cursor-pointer hover:text-slate-900" htmlFor="existing-contact">Existing Customer</label>
+                          </div>
+                          <div className="flex items-center gap-4 w-full sm:w-auto">
+                            <div className="flex items-center h-6">
+                              <input 
+                                checked={formData.contactType === 'new'} 
+                                onChange={() => setFormData(prev => ({ ...prev, contactType: 'new' }))}
+                                className="focus:ring-primary h-5 w-5 text-primary border-slate-300 cursor-pointer" 
+                                id="new-contact" 
+                                name="contact-type" 
+                                type="radio" 
+                                value="new"
+                              />
+                            </div>
+                            <label className="font-bold text-slate-700 text-sm whitespace-nowrap cursor-pointer hover:text-slate-900" htmlFor="new-contact">New Customer</label>
                           </div>
                         </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                          <div className="relative rounded-md shadow-sm">
-                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                              <span className="material-icons-outlined text-gray-400 text-sm">phone</span>
+                        
+                        {formData.contactType === 'existing' && (
+                          <div className="w-full mt-6 relative">
+                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                              <span className="material-symbols-outlined text-slate-400" style={{ fontSize: '18px' }}>search</span>
                             </div>
-                            <input 
-                              className="block w-full rounded-md border-gray-300 pl-10 focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50 sm:text-sm" 
-                              name="phone" 
-                              type="tel" 
-                              value={formData.phone}
-                              onChange={handleChange}
-                              disabled={isReadOnly}
-                            />
+                            <input className="block w-full h-11 rounded-lg border-slate-200 pl-11 focus:border-primary focus:ring focus:ring-primary/10 sm:text-sm shadow-sm font-medium" id="contact-search" name="contact-search" placeholder="Search by name, email or phone..." type="text"/>
                           </div>
-                        </div>
+                        )}
                       </div>
-                    </div>
-                  </div>
 
-                  {/* Traveller Information */}
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-                      <h3 className="text-lg font-medium text-gray-900 flex items-center">
-                        <span className="material-icons-outlined text-gray-400 mr-2">person</span>
-                        Traveller Information
-                      </h3>
-                    </div>
-                    <div className="p-6">
-                      <div className="mb-8 p-4 bg-gray-50  rounded-lg border border-gray-100 ">
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                          <div className="flex items-center gap-3 w-full sm:w-auto">
-                            <input defaultChecked className="focus:ring-primary h-4 w-4 text-primary border-gray-300  " name="customer-type" type="radio" value="existing"/>
-                            <label className="font-medium text-gray-700  text-sm whitespace-nowrap">Existing Traveller</label>
-                          </div>
-                          <div className="flex items-center gap-3 w-full sm:w-auto">
-                            <input className="focus:ring-primary h-4 w-4 text-primary border-gray-300  " name="customer-type" type="radio" value="new"/>
-                            <label className="font-medium text-gray-700  text-sm whitespace-nowrap">New Traveller</label>
-                          </div>
-                          <div className="w-full sm:flex-1 sm:ml-4 relative">
-                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                              <span className="material-icons-outlined text-gray-400 text-sm">search</span>
-                            </div>
-                            <input className="block w-full rounded-md border-gray-300 pl-10 focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50    sm:text-sm shadow-sm" placeholder="Search existing customer..."/>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="col-span-1 md:col-span-1">
-                          <label className="block text-sm font-medium text-gray-700  mb-1">First Name</label>
-                          <input 
-                            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50    sm:text-sm" 
-                            name="travellerFirstName" 
-                            type="text" 
-                            value={formData.travellerFirstName}
-                            onChange={handleChange}
-                            disabled={isReadOnly}
-                          />
-                        </div>
-                        <div className="col-span-1 md:col-span-1">
-                          <label className="block text-sm font-medium text-gray-700  mb-1">Last Name</label>
-                          <input 
-                            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50    sm:text-sm" 
-                            name="travellerLastName" 
-                            type="text" 
-                            value={formData.travellerLastName}
-                            onChange={handleChange}
-                            disabled={isReadOnly}
-                          />
-                        </div>
-                        <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50 rounded-lg border border-gray-100">
+                      {formData.contactType === 'new' && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Passport Number</label>
-                            <div className="relative rounded-md shadow-sm">
-                              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                <span className="material-icons-outlined text-gray-400 text-sm">badge</span>
+                            <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight" htmlFor="email">Email Address</label>
+                            <div className="relative rounded-lg shadow-sm">
+                              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                                <span className="material-symbols-outlined text-slate-400" style={{ fontSize: '20px' }}>email</span>
                               </div>
                               <input 
-                                className="block w-full rounded-md border-gray-300 pl-10 focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50    sm:text-sm" 
-                                name="passportNumber" 
-                                placeholder="e.g. A1234567X" 
-                                type="text"
-                                value={formData.passportNumber}
+                                className="block w-full h-12 rounded-lg border-slate-200 pl-11 focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium" 
+                                id="email" 
+                                name="email" 
+                                type="email" 
+                                value={formData.email}
                                 onChange={handleChange}
+                                placeholder="customer@email.com"
                                 disabled={isReadOnly}
                               />
                             </div>
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700  mb-1">Passport Expiry Date</label>
-                            <input 
-                              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50    sm:text-sm" 
-                              name="passportExpiry" 
-                              type="date"
-                              value={formData.passportExpiry}
-                              onChange={handleChange}
-                              disabled={isReadOnly}
-                            />
+                            <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight" htmlFor="phone">Phone Number</label>
+                            <div className="relative rounded-lg shadow-sm">
+                              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                                <span className="material-symbols-outlined text-slate-400" style={{ fontSize: '20px' }}>phone</span>
+                              </div>
+                              <input 
+                                className="block w-full h-12 rounded-lg border-slate-200 pl-11 focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium" 
+                                id="phone" 
+                                name="phone" 
+                                type="tel" 
+                                value={formData.phone}
+                                onChange={handleChange}
+                                placeholder="+61 XXX XXX XXX"
+                                disabled={isReadOnly}
+                              />
+                            </div>
                           </div>
                         </div>
-                        <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50 rounded-lg border border-gray-100">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Nationality</label>
-                            <select 
-                              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50    sm:text-sm" 
-                              name="nationality"
-                              value={formData.nationality}
-                              onChange={handleChange}
-                              disabled={isReadOnly}
-                            >
-                              <option>Australian</option>
-                              <option>Nepalese</option>
-                              <option>Singaporean</option>
-                              <option>American</option>
-                            </select>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Traveller Information */}
+                  <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition-all hover:shadow-md">
+                    <div className="px-8 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                      <h3 className="text-lg font-bold text-slate-900 flex items-center tracking-tight">
+                        <span className="material-symbols-outlined text-primary mr-3">person</span>
+                        Traveller Information
+                      </h3>
+                    </div>
+                    <div className="p-8">
+                      <div className="mb-8 p-6 bg-slate-50/50 rounded-xl border border-slate-100">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-6">
+                          <div className="flex items-center gap-4 w-full sm:w-auto">
+                            <div className="flex items-center h-6">
+                              <input 
+                                checked={formData.customerType === 'existing'} 
+                                onChange={() => setFormData(prev => ({ ...prev, customerType: 'existing' }))}
+                                className="focus:ring-primary h-5 w-5 text-primary border-slate-300 cursor-pointer" 
+                                id="existing-customer" 
+                                name="customer-type" 
+                                type="radio" 
+                                value="existing"
+                              />
+                            </div>
+                            <label className="font-bold text-slate-700 text-sm whitespace-nowrap cursor-pointer hover:text-slate-900" htmlFor="existing-customer">Existing Traveller</label>
                           </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700  mb-1">Date of Birth</label>
-                            <input 
-                              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50    sm:text-sm" 
-                              name="dob" 
-                              type="date"
-                              value={formData.dob}
-                              onChange={handleChange}
-                              disabled={isReadOnly}
-                            />
+                          <div className="flex items-center gap-4 w-full sm:w-auto">
+                            <div className="flex items-center h-6">
+                              <input 
+                                checked={formData.customerType === 'new'} 
+                                onChange={() => setFormData(prev => ({ ...prev, customerType: 'new' }))}
+                                className="focus:ring-primary h-5 w-5 text-primary border-slate-300 cursor-pointer" 
+                                id="new-customer" 
+                                name="customer-type" 
+                                type="radio" 
+                                value="new"
+                              />
+                            </div>
+                            <label className="font-bold text-slate-700 text-sm whitespace-nowrap cursor-pointer hover:text-slate-900" htmlFor="new-customer">New Traveller</label>
                           </div>
                         </div>
+
+                        {formData.customerType === 'existing' && (
+                          <div className="w-full mt-6 relative">
+                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                              <span className="material-symbols-outlined text-slate-400" style={{ fontSize: '18px' }}>search</span>
+                            </div>
+                            <input className="block w-full h-11 rounded-lg border-slate-200 pl-11 focus:border-primary focus:ring focus:ring-primary/10 sm:text-sm shadow-sm font-medium" id="customer-search" name="customer-search" placeholder="Search by name, email or phone..." type="text"/>
+                          </div>
+                        )}
                       </div>
+
+                      {formData.customerType === 'new' && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          <div className="col-span-1">
+                            <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight">First Name</label>
+                            <input 
+                              className="block w-full h-12 rounded-lg border-slate-200 shadow-sm focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium pl-4" 
+                              name="travellerFirstName" 
+                              type="text" 
+                              value={formData.travellerFirstName}
+                              onChange={handleChange}
+                              disabled={isReadOnly}
+                              placeholder="e.g. John"
+                            />
+                          </div>
+                          <div className="col-span-1">
+                            <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight">Last Name</label>
+                            <input 
+                              className="block w-full h-12 rounded-lg border-slate-200 shadow-sm focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium pl-4" 
+                              name="travellerLastName" 
+                              type="text" 
+                              value={formData.travellerLastName}
+                              onChange={handleChange}
+                              disabled={isReadOnly}
+                              placeholder="e.g. Doe"
+                            />
+                          </div>
+                          <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8 p-6 bg-slate-50/50 rounded-xl border border-slate-100">
+                            <div>
+                              <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight" htmlFor="passport-number">Passport Number</label>
+                              <div className="relative rounded-lg shadow-sm">
+                                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                                  <span className="material-symbols-outlined text-slate-400" style={{ fontSize: '20px' }}>badge</span>
+                                </div>
+                                <input 
+                                  className="block w-full h-12 rounded-lg border-slate-200 pl-11 focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium" 
+                                  name="passportNumber" 
+                                  placeholder="e.g. A1234567X" 
+                                  type="text"
+                                  value={formData.passportNumber}
+                                  onChange={handleChange}
+                                  disabled={isReadOnly}
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight" htmlFor="passport-expiry">Passport Expiry Date</label>
+                              <input 
+                                className="block w-full h-12 rounded-lg border-slate-200 shadow-sm focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium px-4" 
+                                name="passportExpiry" 
+                                type="date"
+                                value={formData.passportExpiry}
+                                onChange={handleChange}
+                                disabled={isReadOnly}
+                              />
+                            </div>
+                          </div>
+                          <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8 p-6 bg-slate-50/50 rounded-xl border border-slate-100">
+                            <div>
+                              <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight" htmlFor="nationality">Nationality</label>
+                              <select 
+                                className="block w-full h-12 rounded-lg border-slate-200 shadow-sm focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium px-4" 
+                                name="nationality"
+                                value={formData.nationality}
+                                onChange={handleChange}
+                                disabled={isReadOnly}
+                              >
+                                <option>Australian</option>
+                                <option>Nepalese</option>
+                                <option>Singaporean</option>
+                                <option>American</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight" htmlFor="dob">Date of Birth</label>
+                              <input 
+                                className="block w-full h-12 rounded-lg border-slate-200 shadow-sm focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium px-4" 
+                                name="dob" 
+                                type="date"
+                                value={formData.dob}
+                                onChange={handleChange}
+                                disabled={isReadOnly}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
                   {/* Route & Trip Details */}
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-                      <h3 className="text-lg font-medium text-gray-900 flex items-center">
-                        <span className="material-icons-outlined text-gray-400 mr-2">flight_takeoff</span>
+                  <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition-all hover:shadow-md">
+                    <div className="px-8 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                      <h3 className="text-lg font-bold text-slate-900 flex items-center tracking-tight">
+                        <span className="material-symbols-outlined text-primary mr-3">flight_takeoff</span>
                         Route & Trip Details
                       </h3>
                       <button 
                         type="button"
                         onClick={() => setShowStopover(!showStopover)}
-                        className={`text-sm font-medium transition-colors flex items-center ${showStopover ? 'text-red-600 hover:text-red-700' : 'text-primary hover:text-blue-700'}`}
+                        className={`text-sm font-bold transition-all flex items-center px-4 py-2 rounded-lg ${showStopover ? 'text-red-600 bg-red-50 hover:bg-red-100' : 'text-primary bg-blue-50 hover:bg-blue-100'}`}
                       >
-                        <span className="material-icons-outlined text-base mr-1">
-                          {showStopover ? 'remove_circle_outline' : 'add_circle_outline'}
+                        <span className="material-symbols-outlined text-base mr-2">
+                          {showStopover ? 'remove_circle' : 'add_circle'}
                         </span>
                         {showStopover ? 'Remove Stopover' : 'Add Stopover'}
                       </button>
                     </div>
-                    <div className="p-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="p-8">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700  mb-1">Trip Type</label>
+                          <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight">Trip Type</label>
                           <select 
-                            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50    sm:text-sm" 
+                            className="block w-full h-12 rounded-lg border-slate-200 shadow-sm focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium px-4" 
                             name="tripType"
                             value={formData.tripType}
                             onChange={handleChange}
@@ -401,9 +502,9 @@ export default function BookingModal({
                           </select>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700  mb-1">Travel Date</label>
+                          <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight">Travel Date</label>
                           <input 
-                            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50    sm:text-sm" 
+                            className="block w-full h-12 rounded-lg border-slate-200 shadow-sm focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium px-4" 
                             name="travelDate" 
                             type="date"
                             value={formData.travelDate}
@@ -412,13 +513,13 @@ export default function BookingModal({
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700  mb-1">Origin (From)</label>
+                          <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight">Origin (From)</label>
                           <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                              <span className="material-icons-outlined text-gray-400 text-sm">flight_takeoff</span>
+                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                              <span className="material-symbols-outlined text-slate-400" style={{ fontSize: '20px' }}>flight_takeoff</span>
                             </div>
                             <input 
-                              className="block w-full pl-10 rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50    sm:text-sm" 
+                              className="block w-full h-12 pl-12 rounded-lg border-slate-200 shadow-sm focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium" 
                               name="origin" 
                               placeholder="City or Airport" 
                               type="text"
@@ -429,13 +530,13 @@ export default function BookingModal({
                           </div>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700  mb-1">Destination (To)</label>
+                          <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight">Destination (To)</label>
                           <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                              <span className="material-icons-outlined text-gray-400 text-sm">flight_land</span>
+                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                              <span className="material-symbols-outlined text-slate-400" style={{ fontSize: '20px' }}>flight_land</span>
                             </div>
                             <input 
-                              className="block w-full pl-10 rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50    sm:text-sm" 
+                              className="block w-full h-12 pl-12 rounded-lg border-slate-200 shadow-sm focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium" 
                               name="destination" 
                               placeholder="City or Airport" 
                               type="text"
@@ -447,20 +548,20 @@ export default function BookingModal({
                         </div>
 
                         {showStopover && (
-                          <div className="md:col-span-2 bg-gray-50 border border-gray-200 rounded-lg p-5 mt-2 mb-2 relative transition-all duration-300 ease-in-out">
-                            <h4 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                              <span className="w-2 h-2 rounded-full bg-primary ring-2 ring-blue-100"></span>
+                          <div className="md:col-span-2 bg-slate-50/50 border border-slate-100 rounded-xl p-6 mt-2 mb-2 relative transition-all duration-300">
+                            <h4 className="text-sm font-bold text-slate-900 mb-6 flex items-center gap-3">
+                              <span className="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_8px_rgba(59,130,246,0.5)]"></span>
                               Stopover Segment Details
                             </h4>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                               <div className="md:col-span-1">
-                                <label className="block text-sm font-medium text-gray-700  mb-1">Stopover Location</label>
+                                <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight">Stopover Location</label>
                                 <div className="relative">
-                                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span className="material-icons-outlined text-gray-400 text-sm">place</span>
+                                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <span className="material-symbols-outlined text-slate-400" style={{ fontSize: '20px' }}>place</span>
                                   </div>
                                   <input 
-                                    className="block w-full pl-10 rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50    sm:text-sm" 
+                                    className="block w-full h-12 pl-12 rounded-lg border-slate-200 shadow-sm focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium" 
                                     name="stopoverLocation" 
                                     placeholder="City, Airport Code" 
                                     type="text"
@@ -471,9 +572,9 @@ export default function BookingModal({
                                 </div>
                               </div>
                               <div className="md:col-span-1">
-                                <label className="block text-sm font-medium text-gray-700  mb-1">Arrival Date</label>
+                                <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight">Arrival Date</label>
                                 <input 
-                                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50    sm:text-sm" 
+                                  className="block w-full h-12 rounded-lg border-slate-200 shadow-sm focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium px-4" 
                                   name="stopoverArrival" 
                                   type="date"
                                   value={formData.stopoverArrival}
@@ -482,9 +583,9 @@ export default function BookingModal({
                                 />
                               </div>
                               <div className="md:col-span-1">
-                                <label className="block text-sm font-medium text-gray-700  mb-1">Departure Date</label>
+                                <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight">Departure Date</label>
                                 <input 
-                                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50    sm:text-sm" 
+                                  className="block w-full h-12 rounded-lg border-slate-200 shadow-sm focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium px-4" 
                                   name="stopoverDeparture" 
                                   type="date"
                                   value={formData.stopoverDeparture}
@@ -496,17 +597,19 @@ export default function BookingModal({
                           </div>
                         )}
 
-                        <div className="md:col-span-2 border-t border-gray-100  pt-4 mt-2">
-                          <h4 className="text-xs font-semibold text-gray-500  uppercase tracking-wider mb-4">Flight Details</h4>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="md:col-span-2 border-t border-slate-100 pt-8 mt-4">
+                          <div className="flex justify-between items-center mb-6">
+                            <h4 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Flight Details</h4>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                             <div className="md:col-span-1">
-                              <label className="block text-sm font-medium text-gray-700  mb-1">Airline</label>
+                              <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight">Airline</label>
                               <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                  <span className="material-icons-outlined text-gray-400 text-sm">airlines</span>
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                  <span className="material-symbols-outlined text-slate-400" style={{ fontSize: '20px' }}>airlines</span>
                                 </div>
                                 <input 
-                                  className="block w-full pl-10 rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50    sm:text-sm" 
+                                  className="block w-full h-12 pl-12 rounded-lg border-slate-200 shadow-sm focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium" 
                                   name="airlines" 
                                   placeholder="e.g. Singapore Airlines" 
                                   type="text"
@@ -517,9 +620,9 @@ export default function BookingModal({
                               </div>
                             </div>
                             <div className="md:col-span-1">
-                              <label className="block text-sm font-medium text-gray-700  mb-1">Flight No.</label>
+                              <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight">Flight No.</label>
                               <input 
-                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50    sm:text-sm" 
+                                className="block w-full h-12 rounded-lg border-slate-200 shadow-sm focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium px-4" 
                                 name="flightNumber" 
                                 placeholder="e.g. SQ218" 
                                 type="text"
@@ -529,9 +632,9 @@ export default function BookingModal({
                               />
                             </div>
                             <div className="md:col-span-1">
-                              <label className="block text-sm font-medium text-gray-700  mb-1">Class</label>
+                              <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight">Class</label>
                               <select 
-                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50    sm:text-sm" 
+                                className="block w-full h-12 rounded-lg border-slate-200 shadow-sm focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium px-4" 
                                 name="flightClass"
                                 value={formData.flightClass}
                                 onChange={handleChange}
@@ -548,10 +651,10 @@ export default function BookingModal({
 
                         <div className="md:col-span-2 mt-2">
                           <div className="p-3 bg-blue-50 border border-blue-100 rounded-md flex items-start gap-3">
-                            <span className="material-icons-outlined text-blue-500 mt-0.5">info</span>
+                            <span className="material-symbols-outlined text-blue-500 mt-0.5">info</span>
                             <div>
                               <p className="text-sm text-blue-800 font-medium">Itinerary Modification</p>
-                              <p className="text-xs text-blue-600 mt-0.5">Changing origin, destination, or dates may affect pricing.</p>
+                              <p className="text-xs text-blue-600 mt-0.5">Changing origin, destination, or dates may affect pricing. Ensure to re-calculate fares after modifying the itinerary.</p>
                             </div>
                           </div>
                         </div>
@@ -560,97 +663,79 @@ export default function BookingModal({
                   </div>
 
                   {/* Add-ons & Services */}
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                      <h3 className="text-lg font-medium text-gray-900 flex items-center">
-                        <span className="material-icons-outlined text-gray-400 mr-2">extension</span>
+                  <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition-all hover:shadow-md">
+                    <div className="px-8 py-5 border-b border-slate-100 bg-slate-50/50">
+                      <h3 className="text-lg font-bold text-slate-900 flex items-center tracking-tight">
+                        <span className="material-symbols-outlined text-primary mr-3">extension</span>
                         Add-ons & Services
                       </h3>
                     </div>
-                    <div className="p-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="space-y-4">
-                          <h4 className="text-xs font-semibold text-gray-500  uppercase tracking-wider mb-4">Ancillary Services</h4>
-                          
-                          {/* Meals */}
-                          <div className="flex items-center justify-between">
+                    <div className="p-8">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                        <div className="space-y-6">
+                          <h4 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-6">Ancillary Services</h4>
+                          <div className="flex items-center justify-between p-4 bg-slate-50/50 rounded-xl border border-slate-100">
                             <div className="flex items-center">
-                              <label className="flex items-center space-x-3 cursor-pointer group">
+                              <label className="flex items-center space-x-4 cursor-pointer group">
                                 <input 
-                                  className="h-4 w-4 text-primary border-gray-300 rounded focus:ring-primary   transition duration-150 ease-in-out" 
+                                  className="h-5 w-5 text-primary border-slate-300 rounded focus:ring-primary transition-all cursor-pointer" 
                                   type="checkbox"
                                   name="addon-meals"
                                   checked={formData.addons.meals}
                                   onChange={handleChange}
                                 />
-                                <span className="text-sm font-medium text-gray-700  group-hover:text-primary transition-colors">Meals</span>
+                                <span className="text-sm font-bold text-slate-700 group-hover:text-primary transition-colors">Meals</span>
                               </label>
                               <button 
                                 type="button"
                                 onClick={() => setIsMealModalOpen(true)}
-                                className="ml-3 text-xs font-medium text-primary hover:text-blue-600 :text-blue-400 cursor-pointer flex items-center gap-1 transition-colors select-none"
+                                className="ml-4 text-xs font-bold text-primary hover:text-blue-700 cursor-pointer flex items-center gap-1.5 transition-colors px-2 py-1 bg-blue-50 rounded-md"
                               >
-                                <span className="material-icons-outlined text-[16px]">tune</span>
-                                Select Options
+                                <span className="material-symbols-outlined text-base">tune</span>
+                                Options
                               </button>
                             </div>
                             <div className="relative w-32">
-                              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500  sm:text-xs">$</span>
-                              <input className="block w-full rounded-md border-gray-300 pl-7 py-1.5 focus:border-primary    sm:text-sm text-right" placeholder="0.00" type="number"/>
+                              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                <span className="text-slate-400 font-bold sm:text-xs">$</span>
+                              </div>
+                              <input className="block w-full h-10 rounded-lg border-slate-200 pl-7 text-right focus:border-primary focus:ring focus:ring-primary/10 sm:text-sm font-bold text-slate-700" name="price-meals" value={formData.prices?.meals || ""} onChange={handleChange} placeholder="0.00" type="number"/>
                             </div>
                           </div>
-
-                          {/* Request Wheelchair */}
-                          <div className="flex items-center justify-between">
-                            <label className="flex items-center space-x-3 cursor-pointer group">
+                          {/* Simplified remaining addons */}
+                          <div className="flex items-center justify-between p-4 bg-slate-50/50 rounded-xl border border-slate-100">
+                            <label className="flex items-center space-x-4 cursor-pointer group">
                               <input 
-                                className="h-4 w-4 text-primary border-gray-300 rounded focus:ring-primary   transition duration-150 ease-in-out" 
+                                className="h-5 w-5 text-primary border-slate-300 rounded focus:ring-primary transition-all cursor-pointer" 
                                 type="checkbox"
                                 name="addon-wheelchair"
                                 checked={formData.addons.wheelchair}
                                 onChange={handleChange}
                               />
-                              <span className="text-sm font-medium text-gray-700  group-hover:text-primary transition-colors">Request Wheelchair</span>
+                              <span className="text-sm font-bold text-slate-700 group-hover:text-primary transition-colors">Wheelchair</span>
                             </label>
                             <div className="relative w-32">
-                              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500  sm:text-xs">$</span>
-                              <input className="block w-full rounded-md border-gray-300 pl-7 py-1.5 focus:border-primary    sm:text-sm text-right" placeholder="0.00" type="number"/>
+                              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                <span className="text-slate-400 font-bold sm:text-xs">$</span>
+                              </div>
+                              <input className="block w-full h-10 rounded-lg border-slate-200 pl-7 text-right focus:border-primary focus:ring focus:ring-primary/10 sm:text-sm font-bold text-slate-700" name="price-wheelchair" value={formData.prices?.wheelchair || ""} onChange={handleChange} placeholder="0.00" type="number"/>
                             </div>
                           </div>
-
-                          {/* Airport Pick-up */}
-                          <div className="flex items-center justify-between">
-                            <label className="flex items-center space-x-3 cursor-pointer group">
-                              <input 
-                                className="h-4 w-4 text-primary border-gray-300 rounded focus:ring-primary   transition duration-150 ease-in-out" 
-                                type="checkbox"
-                                name="addon-pickup"
-                                checked={formData.addons.pickup}
-                                onChange={handleChange}
-                              />
-                              <span className="text-sm font-medium text-gray-700  group-hover:text-primary transition-colors">Airport Pick-up</span>
-                            </label>
-                            <div className="relative w-32">
-                              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500  sm:text-xs">$</span>
-                              <input className="block w-full rounded-md border-gray-300 pl-7 py-1.5 focus:border-primary    sm:text-sm text-right" placeholder="0.00" type="number"/>
-                            </div>
-                          </div>
-
-                          <div className="pt-4 mt-2 border-t border-gray-100  flex items-center justify-between">
-                            <span className="text-sm font-semibold text-gray-700 ">Add-ons Subtotal</span>
-                            <div className="text-lg font-bold text-primary">$25.00</div>
+                          <div className="pt-6 mt-2 border-t border-slate-100 flex items-center justify-between">
+                            <span className="text-sm font-bold text-slate-500 uppercase tracking-wider">Add-ons Subtotal</span>
+                            <div className="text-xl font-black text-primary">${calculateAddonsTotal()}</div>
                           </div>
                         </div>
-
-                        <div className="space-y-6">
+                        <div className="space-y-8">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700  mb-1">Frequent Flyer Number</label>
-                            <div className="relative rounded-md shadow-sm">
-                              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                <span className="material-icons-outlined text-gray-400 text-sm">loyalty</span>
+                            <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight" htmlFor="frequent-flyer">Frequent Flyer Number</label>
+                            <div className="relative rounded-lg shadow-sm">
+                              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                                <span className="material-symbols-outlined text-slate-400" style={{ fontSize: '20px' }}>loyalty</span>
                               </div>
                               <input 
-                                className="block w-full rounded-md border-gray-300 pl-10 focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50    sm:text-sm" 
+                                className="block w-full h-12 rounded-lg border-slate-200 pl-11 focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium" 
+                                id="frequent-flyer" 
                                 name="frequentFlyer" 
                                 placeholder="e.g. AA-12345678" 
                                 type="text"
@@ -661,11 +746,11 @@ export default function BookingModal({
                             </div>
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700  mb-2">Seat Selection</label>
-                            <div className="border-2 border-dashed border-gray-300  rounded-lg p-4 bg-gray-50  flex flex-col items-center justify-center text-center hover:bg-gray-100 :bg-gray-800/50 transition-colors cursor-pointer group h-24">
-                              <span className="material-icons-outlined text-gray-400 group-hover:text-primary mb-1 transition-colors">event_seat</span>
-                              <span className="text-sm font-medium text-gray-600  group-hover:text-primary transition-colors">Select Seat</span>
-                              <span className="text-xs text-gray-500  mt-1 font-medium group-hover:text-primary transition-colors">$25.00</span>
+                            <label className="block text-sm font-bold text-slate-700 mb-3 tracking-tight">Seat Selection</label>
+                            <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 bg-slate-50/50 flex flex-col items-center justify-center text-center hover:bg-slate-100 hover:border-primary/30 transition-all cursor-pointer group h-28">
+                              <span className="material-symbols-outlined text-slate-400 group-hover:text-primary mb-2 transition-colors" style={{ fontSize: '28px' }}>event_seat</span>
+                              <span className="text-sm font-bold text-slate-600 group-hover:text-primary transition-colors tracking-tight">Select Premium Seat</span>
+                              <span className="text-xs text-primary mt-1 font-black bg-blue-50 px-2 py-0.5 rounded">FROM $25.00</span>
                             </div>
                           </div>
                         </div>
@@ -677,19 +762,19 @@ export default function BookingModal({
                 {/* Right Column (Sidebar) */}
                 <div className="space-y-6">
                   {/* Booking Details */}
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                      <h3 className="text-lg font-medium text-gray-900">Booking Details</h3>
+                  <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition-all hover:shadow-md">
+                    <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+                      <h3 className="text-base font-bold text-slate-900 tracking-tight">Booking Details</h3>
                     </div>
-                    <div className="p-6 space-y-4">
+                    <div className="p-6 space-y-5">
                       <div>
-                        <label className="block text-sm font-medium text-gray-500  mb-1">Booking ID</label>
-                        <input className="block w-full rounded-md border-gray-200 bg-gray-50 text-gray-500 shadow-sm cursor-not-allowed    sm:text-sm" readOnly type="text" value={booking?.id ? `#${booking.id}` : "NEW"}/>
+                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">ID Ref (Read Only)</label>
+                        <input className="block w-full h-11 rounded-lg border-slate-100 bg-slate-50 text-slate-400 shadow-none cursor-not-allowed sm:text-sm font-mono" readOnly type="text" value={booking?.id ? `#${booking.id}` : "NEW"}/>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700  mb-1">PNR Reference</label>
+                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2" htmlFor="pnr">PNR Reference</label>
                         <input 
-                          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary    font-mono uppercase sm:text-sm" 
+                          className="block w-full h-11 rounded-lg border-slate-200 shadow-sm focus:border-primary focus:ring focus:ring-primary/10 font-mono uppercase sm:text-sm font-bold text-slate-700 pl-4" 
                           name="pnr" 
                           type="text"
                           value={formData.pnr}
@@ -698,15 +783,15 @@ export default function BookingModal({
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700  mb-1">Issued through Agency</label>
-                        <select className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary    sm:text-sm" name="agency" value={formData.agency} onChange={handleChange} disabled={isReadOnly}>
+                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2" htmlFor="agency">Issued through</label>
+                        <select className="block w-full h-11 rounded-lg border-slate-200 shadow-sm focus:border-primary focus:ring focus:ring-primary/10 sm:text-sm font-bold text-slate-700 px-4" name="agency" value={formData.agency} onChange={handleChange} disabled={isReadOnly}>
                           <option>SkyHigh Agency Ltd.</option>
                           <option>Global Travels Inc.</option>
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700  mb-1">Booking Status</label>
-                        <select className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary    sm:text-sm" name="status" value={formData.status} onChange={handleChange} disabled={isReadOnly}>
+                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2" htmlFor="status">Booking Status</label>
+                        <select className="block w-full h-11 rounded-lg border-slate-200 shadow-sm focus:border-primary focus:ring focus:ring-primary/10 sm:text-sm font-bold text-slate-700 px-4" name="status" value={formData.status} onChange={handleChange} disabled={isReadOnly}>
                           <option>Confirmed</option>
                           <option>Pending</option>
                           <option>Cancelled</option>
@@ -716,36 +801,62 @@ export default function BookingModal({
                   </div>
 
                   {/* Financials */}
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                      <h3 className="text-lg font-medium text-gray-900">Financials</h3>
+                  <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition-all hover:shadow-md">
+                    <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+                      <h3 className="text-base font-bold text-slate-900 tracking-tight">Financials Summary</h3>
                     </div>
-                    <div className="p-6 space-y-4">
+                    <div className="p-6 space-y-5">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700  mb-1">Payment Status</label>
-                        <select className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary    sm:text-sm" name="paymentStatus" value={formData.paymentStatus} onChange={handleChange} disabled={isReadOnly}>
+                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2" htmlFor="payment-status">Payment Status</label>
+                        <select className="block w-full h-11 rounded-lg border-slate-200 shadow-sm focus:border-primary focus:ring focus:ring-primary/10 sm:text-sm font-bold text-slate-700 px-4" name="paymentStatus" value={formData.paymentStatus} onChange={handleChange} disabled={isReadOnly}>
                           <option>Paid</option>
                           <option>Pending</option>
                           <option>Refunded</option>
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700  mb-1">Cost Price ($)</label>
-                        <input className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary    sm:text-sm" name="costPrice" type="number" step="0.01" value={formData.costPrice} onChange={handleChange} disabled={isReadOnly}/>
+                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2" htmlFor="cost-price">Cost Price ($)</label>
+                        <div className="relative rounded-lg shadow-sm">
+                          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                            <span className="text-slate-400 font-bold">$</span>
+                          </div>
+                          <input 
+                            className="block w-full h-11 rounded-lg border-slate-200 pl-8 shadow-sm focus:border-primary focus:ring focus:ring-primary/10 sm:text-sm font-bold text-slate-700" 
+                            name="costPrice" 
+                            type="number" 
+                            step="0.01" 
+                            value={formData.costPrice} 
+                            onChange={handleChange} 
+                            disabled={isReadOnly}
+                          />
+                        </div>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700  mb-1">Selling Price ($)</label>
-                        <input className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary    sm:text-sm font-semibold text-primary" name="sellingPrice" type="number" step="0.01" value={formData.sellingPrice} onChange={handleChange} disabled={isReadOnly}/>
+                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2" htmlFor="selling-price">Selling Price ($)</label>
+                        <div className="relative rounded-lg shadow-sm">
+                          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                            <span className="text-slate-400 font-bold">$</span>
+                          </div>
+                          <input 
+                            className="block w-full h-11 rounded-lg border-slate-200 pl-8 shadow-sm focus:border-primary focus:ring focus:ring-primary/10 sm:text-sm font-black text-primary" 
+                            name="sellingPrice" 
+                            type="number" 
+                            step="0.01" 
+                            value={formData.sellingPrice} 
+                            onChange={handleChange} 
+                            disabled={isReadOnly}
+                          />
+                        </div>
                       </div>
 
-                      <div className="bg-gray-100  rounded p-4 mt-4 border border-gray-200 ">
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="text-sm font-medium text-gray-600 ">Base Cost</span>
-                          <span className="text-sm font-medium text-gray-900 ">${formData.costPrice}</span>
+                      <div className="bg-slate-50 rounded-xl p-5 mt-4 border border-slate-100">
+                        <div className="flex justify-between items-center mb-3">
+                          <span className="text-sm font-bold text-slate-500">Net Cost</span>
+                          <span className="text-sm font-black text-slate-900">${formData.costPrice}</span>
                         </div>
-                        <div className="flex justify-between items-center pt-3 border-t border-gray-200 ">
-                          <span className="text-base font-bold text-gray-900 ">Grand Total</span>
-                          <span className="text-lg font-bold text-primary">$735.00</span>
+                        <div className="flex justify-between items-center pt-4 border-t border-slate-200">
+                          <span className="text-base font-black text-slate-900">Grand Total</span>
+                          <span className="text-xl font-black text-primary tracking-tight">${calculateGrandTotal()}</span>
                         </div>
                       </div>
                     </div>
@@ -754,19 +865,19 @@ export default function BookingModal({
                   {/* Actions */}
                   <div className="pt-4 flex flex-col gap-3 sticky bottom-0 bg-gray-50 p-2 -mx-2">
                     <button 
-                      className="w-full flex justify-center items-center px-4 py-3 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors disabled:opacity-50" 
+                      className="w-full flex justify-center items-center h-14 border border-transparent shadow-lg text-base font-black rounded-xl text-white bg-primary hover:bg-blue-600 transition-all transform hover:-translate-y-0.5 active:translate-y-0 shadow-blue-500/20 disabled:opacity-50" 
                       type="submit"
                       disabled={isLoading}
                     >
-                      <span className="material-icons-outlined text-lg mr-2">save</span>
-                      {isLoading ? "Saving..." : "Save Changes"}
+                      <span className="material-symbols-outlined text-2xl mr-3">save</span>
+                      {isLoading ? "SAVING..." : "SAVE CHANGES"}
                     </button>
                     <button 
-                      className="w-full flex justify-center items-center px-4 py-3 border border-gray-300  shadow-sm text-sm font-medium rounded-md text-gray-700  bg-white  hover:bg-gray-50 :bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors" 
+                      className="w-full flex justify-center items-center h-14 border-2 border-slate-100 shadow-sm text-base font-bold rounded-xl text-slate-600 bg-white hover:bg-slate-50 hover:border-slate-200 transition-all" 
                       type="button"
                       onClick={onClose}
                     >
-                      Cancel
+                      CANCEL
                     </button>
                   </div>
                 </div>
@@ -780,37 +891,44 @@ export default function BookingModal({
       {isMealModalOpen && (
         <div className="fixed inset-0 z-[60] flex justify-center items-center overflow-hidden">
           <div className="absolute inset-0 bg-gray-900/50 backdrop-blur-sm" onClick={() => setIsMealModalOpen(false)}></div>
-          <div className="relative bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden ring-1 ring-black/5 flex flex-col max-h-[90vh]">
-            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-              <h3 className="text-lg font-semibold text-gray-900">Select Meal Options</h3>
-              <button onClick={() => setIsMealModalOpen(false)} className="text-gray-400 hover:text-gray-500 transition-colors cursor-pointer p-1 rounded-full hover:bg-gray-100">
-                <span className="material-icons-outlined">close</span>
+          <div className="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden ring-1 ring-slate-200 flex flex-col max-h-[90vh] transition-all transform scale-100">
+            <div className="px-8 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+              <div>
+                <h3 className="text-xl font-black text-slate-900 tracking-tight">Select Meal Options</h3>
+                <p className="text-xs text-slate-500 font-medium mt-1 uppercase tracking-widest">Premium Flight Services</p>
+              </div>
+              <button onClick={() => setIsMealModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-all cursor-pointer p-2 rounded-xl hover:bg-slate-100">
+                <span className="material-symbols-outlined font-bold">close</span>
               </button>
             </div>
-            <div className="p-6 space-y-4 overflow-y-auto">
-              {['No Meal', 'Standard Meal', 'Vegetarian Meal', 'Vegan Meal'].map((meal) => (
-                <label key={meal} className="flex items-center justify-between p-4 rounded-lg border border-gray-200  cursor-pointer hover:border-primary/50 hover:bg-blue-50/30 transition-all group">
-                  <div className="flex items-center gap-4">
-                    <input className="focus:ring-primary h-4 w-4 text-primary border-gray-300" name="meal_option" type="radio" value={meal.toLowerCase().replace(' ', '-')}/>
-                    <div>
-                      <span className="block text-sm font-medium text-gray-900 ">{meal}</span>
-                      <span className="block text-xs text-gray-500 mt-0.5">Meal description here</span>
-                    </div>
+            <div className="p-8 space-y-6 overflow-y-auto">
+              {[
+                { id: 'vml', name: 'Vegetarian Hindu Meal', desc: 'No beef, no pork, prepared with dairy.' },
+                { id: 'moors', name: 'Muslim Meal', desc: 'No pork, no alcohol, Halal certified.' },
+                { id: 'ksml', name: 'Kosher Meal', desc: 'Prepared under rabbinic supervision.' },
+                { id: 'vgml', name: 'Vegan Meal', desc: 'No animal products, no honey or eggs.' },
+                { id: 'gfml', name: 'Gluten Free Meal', desc: 'Prepared without wheat, barley or rye.' }
+              ].map((meal) => (
+                <label key={meal.id} className="flex items-start gap-4 p-4 rounded-xl border border-slate-100 hover:border-primary/30 hover:bg-blue-50/30 cursor-pointer transition-all group">
+                  <div className="flex items-center h-6 mt-1">
+                    <input name="meal-selection" type="radio" className="w-5 h-5 text-primary border-slate-300 focus:ring-primary cursor-pointer" />
                   </div>
-                  <div className="text-sm font-medium text-gray-900 ">$15.00</div>
+                  <div>
+                    <p className="text-sm font-black text-slate-900 group-hover:text-primary transition-colors">{meal.name}</p>
+                    <p className="text-xs text-slate-500 font-medium mt-1 leading-relaxed">{meal.desc}</p>
+                  </div>
                 </label>
               ))}
             </div>
-            <div className="px-6 py-4 border-t border-gray-100  flex justify-end gap-3 bg-gray-50/50 ">
-              <button onClick={() => setIsMealModalOpen(false)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">Cancel</button>
-              <button onClick={() => setIsMealModalOpen(false)} className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-blue-600">Confirm</button>
+            <div className="px-8 py-5 border-t border-slate-100 flex justify-end gap-4 bg-slate-50/50">
+              <button onClick={() => setIsMealModalOpen(false)} className="px-6 py-2.5 text-sm font-bold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all">CLOSE</button>
+              <button onClick={() => setIsMealModalOpen(false)} className="px-8 py-2.5 text-sm font-black text-white bg-primary rounded-xl hover:bg-blue-600 shadow-lg shadow-blue-500/20 transition-all">CONFIRM SELECTION</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Material Icons Link */}
-      <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet"/>
+      {/* Material Icons Link Removed */}
     </div>
   );
 }
