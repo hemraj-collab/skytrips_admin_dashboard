@@ -1,10 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import AirportAutocomplete from "@/components/AirportAutocomplete";
+import AirlineAutocomplete from "@/components/AirlineAutocomplete";
+import countryData from "../../../../../../libs/shared-utils/constants/country.json";
 // import { Booking } from "@/types";
 import Link from "next/link";
+
+
+
+
 
 export default function EditBookingPage() {
   const router = useRouter();
@@ -455,10 +462,10 @@ export default function EditBookingPage() {
                           value={formData.nationality}
                           onChange={handleChange}
                         >
-                          <option>Australian</option>
-                          <option value="Nepalese">Nepalese</option>
-                          <option>Singaporean</option>
-                          <option>American</option>
+                          <option value="">Select Nationality</option>
+                          {countryData.countries.map((c) => (
+                            <option key={c.value} value={c.label}>{c.label}</option>
+                          ))}
                         </select>
                       </div>
                       <div>
@@ -524,38 +531,24 @@ export default function EditBookingPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight" htmlFor="origin">Origin (From)</label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <span className="material-symbols-outlined text-slate-400" style={{ fontSize: '20px' }}>flight_takeoff</span>
-                      </div>
-                      <input 
-                        className="block w-full h-12 pl-12 rounded-lg border-slate-200 shadow-sm focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium" 
-                        id="origin" 
-                        name="origin" 
-                        placeholder="City or Airport" 
-                        type="text" 
-                        value={formData.origin}
-                        onChange={handleChange}
-                      />
-                    </div>
+                    <AirportAutocomplete 
+                      label="Origin (From)"
+                      name="origin"
+                      value={formData.origin}
+                      onChange={handleChange}
+                      disabled={saving}
+                      icon="flight_takeoff"
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight" htmlFor="destination">Destination (To)</label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <span className="material-symbols-outlined text-slate-400" style={{ fontSize: '20px' }}>flight_land</span>
-                      </div>
-                      <input 
-                        className="block w-full h-12 pl-12 rounded-lg border-slate-200 shadow-sm focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium" 
-                        id="destination" 
-                        name="destination" 
-                        placeholder="City or Airport" 
-                        type="text" 
-                        value={formData.destination}
-                        onChange={handleChange}
-                      />
-                    </div>
+                    <AirportAutocomplete 
+                      label="Destination (To)"
+                      name="destination"
+                      value={formData.destination}
+                      onChange={handleChange}
+                      disabled={saving}
+                      icon="flight_land"
+                    />
                   </div>
                   
                   {showStopover && (
@@ -614,21 +607,14 @@ export default function EditBookingPage() {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                       <div className="md:col-span-1">
-                        <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight" htmlFor="airline">Airline</label>
-                        <div className="relative">
-                          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <span className="material-symbols-outlined text-slate-400" style={{ fontSize: '20px' }}>airlines</span>
-                          </div>
-                          <input 
-                            className="block w-full h-12 pl-12 rounded-lg border-slate-200 shadow-sm focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium" 
-                            id="airline" 
-                            name="airlines" 
-                            placeholder="e.g. Singapore Airlines" 
-                            type="text" 
-                            value={formData.airlines}
-                            onChange={handleChange}
-                          />
-                        </div>
+                        <AirlineAutocomplete 
+                          label="Airline"
+                          name="airlines"
+                          value={formData.airlines}
+                          onChange={handleChange}
+                          disabled={saving}
+                          icon="airlines"
+                        />
                       </div>
                       <div className="md:col-span-1">
                         <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight" htmlFor="flight-number">Flight No.</label>
