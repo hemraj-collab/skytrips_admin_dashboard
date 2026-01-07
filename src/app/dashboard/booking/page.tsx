@@ -422,6 +422,15 @@ export default function BookingPage() {
                             visibility
                           </span>
                         </button>
+                        <button
+                          onClick={() => router.push(`/dashboard/booking/edit/${booking.id}`)}
+                          className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-primary transition-colors"
+                          title="Edit Booking"
+                        >
+                          <span className="material-symbols-outlined text-[20px]">
+                            edit
+                          </span>
+                        </button>
                       </div>
                     </td>
                   </tr>
