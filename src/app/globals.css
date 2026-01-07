@@ -1,15 +1,16 @@
 @import "tailwindcss";
 
 @theme inline {
-  --font-display: "Manrope", sans-serif;
-  --color-primary: #2b8cee;
-  --color-background-light: #ffffff;
-  --color-background-dark: #ffffff;
+  --font-display: "Inter", sans-serif;
+  --font-sans: "Inter", sans-serif;
+  --color-primary: #3B82F6;
+  --color-background-light: #F3F4F6;
+  --color-background-dark: #111827;
   --color-surface-light: #ffffff;
-  --color-surface-dark: #ffffff;
+  --color-surface-dark: #1f2937;
   --color-border-light: #f1f5f9;
   --color-border-dark: #f1f5f9;
-  --radius-default: 0.25rem;
+  --radius-default: 0.5rem;
   --radius-lg: 0.5rem;
   --radius-xl: 0.75rem;
   --radius-full: 9999px;

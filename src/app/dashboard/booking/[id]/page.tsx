@@ -130,7 +130,10 @@ export default function BookingDetailsPage() {
               </span>
               Download Ticket
             </button>
-            <button className="inline-flex items-center px-4 py-2 bg-primary hover:bg-blue-600 text-white text-sm font-medium rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary scale-100 active:scale-95">
+            <button 
+              onClick={() => router.push(`/dashboard/booking/edit/${bookingId}`)}
+              className="inline-flex items-center px-4 py-2 bg-primary hover:bg-blue-600 text-white text-sm font-medium rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary scale-100 active:scale-95"
+            >
               <span className="material-symbols-outlined text-lg mr-2">
                 edit
               </span>
