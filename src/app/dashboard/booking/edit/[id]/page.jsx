@@ -40,6 +40,13 @@ export default function EditBookingPage() {
       dropoff: false,
       luggage: false,
     },
+    prices: {
+      meals: "0.00",
+      wheelchair: "0.00",
+      pickup: "0.00",
+      dropoff: "0.00",
+      luggage: "0.00",
+    },
     frequentFlyer: "",
     pnr: "",
     agency: "SkyHigh Agency Ltd.",
@@ -48,6 +55,7 @@ export default function EditBookingPage() {
     costPrice: 0,
     sellingPrice: 0,
     customerType: "existing", // Added customerType
+    contactType: "existing", // Added contactType for Customer Contact Details
   });
 
   useEffect(() => {
@@ -93,6 +101,13 @@ export default function EditBookingPage() {
             dropoff: false,
             luggage: false,
           },
+          prices: data.prices || {
+            meals: "0.00",
+            wheelchair: "0.00",
+            pickup: "0.00",
+            dropoff: "0.00",
+            luggage: "0.00",
+          },
           frequentFlyer: data.frequentFlyer || "",
           pnr: data.PNR || "",
           agency: data.agency || "SkyHigh Agency Ltd.",
@@ -101,6 +116,7 @@ export default function EditBookingPage() {
           costPrice: data.buyingPrice || 0,
           sellingPrice: data.sellingPrice || 0,
           customerType: data.customerType || "existing",
+          contactType: data.contactType || "existing",
         });
         if (data.stopoverLocation) setShowStopover(true);
       }
@@ -124,6 +140,13 @@ export default function EditBookingPage() {
         }
       }));
       return;
+    } else if (name.startsWith("price-")) {
+      const priceName = name.replace("price-", "");
+      setFormData((prev) => ({
+        ...prev,
+        prices: { ...prev.prices, [priceName]: value },
+      }));
+      return;
     }
 
     setFormData(prev => ({
@@ -132,10 +155,14 @@ export default function EditBookingPage() {
     }));
   };
 
+  const calculateAddonsTotal = () => {
+    return Object.values(formData.prices || {}).reduce((acc, price) => acc + (parseFloat(price) || 0), 0).toFixed(2);
+  };
+
   const calculateGrandTotal = () => {
     const sellingPrice = parseFloat(formData.sellingPrice) || 0;
-    const addonsSubtotal = 25.00; // This should be dynamic, but for now we'll match the UI dummy value
-    return (sellingPrice + addonsSubtotal).toFixed(2);
+    const addonsTotal = parseFloat(calculateAddonsTotal()) || 0;
+    return (sellingPrice + addonsTotal).toFixed(2);
   };
 
   const handleSubmit = async (e) => {
@@ -171,6 +198,7 @@ export default function EditBookingPage() {
         buyingPrice: formData.costPrice,
         sellingPrice: formData.sellingPrice,
         customerType: formData.customerType,
+        contactType: formData.contactType,
       };
 
       const { error } = await supabase
@@ -231,42 +259,86 @@ export default function EditBookingPage() {
                 </h3>
               </div>
               <div className="p-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight" htmlFor="email">Email Address</label>
-                    <div className="relative rounded-lg shadow-sm">
-                      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                        <span className="material-symbols-outlined text-slate-400" style={{ fontSize: '20px' }}>email</span>
+                <div className="mb-8 p-6 bg-slate-50/50 rounded-xl border border-slate-100">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-6">
+                    <div className="flex items-center gap-4 w-full sm:w-auto">
+                      <div className="flex items-center h-6">
+                        <input 
+                          checked={formData.contactType === 'existing'} 
+                          onChange={() => setFormData(prev => ({ ...prev, contactType: 'existing' }))}
+                          className="focus:ring-primary h-5 w-5 text-primary border-slate-300 cursor-pointer" 
+                          id="existing-contact" 
+                          name="contact-type" 
+                          type="radio" 
+                          value="existing"
+                        />
                       </div>
-                      <input 
-                        className="block w-full h-12 rounded-lg border-slate-200 pl-11 focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium" 
-                        id="email" 
-                        name="email" 
-                        type="email" 
-                        value={formData.email}
-                        onChange={handleChange}
-                        placeholder="customer@email.com"
-                      />
+                      <label className="font-bold text-slate-700 text-sm whitespace-nowrap cursor-pointer hover:text-slate-900" htmlFor="existing-contact">Existing Customer</label>
+                    </div>
+                    <div className="flex items-center gap-4 w-full sm:w-auto">
+                      <div className="flex items-center h-6">
+                        <input 
+                          checked={formData.contactType === 'new'} 
+                          onChange={() => setFormData(prev => ({ ...prev, contactType: 'new' }))}
+                          className="focus:ring-primary h-5 w-5 text-primary border-slate-300 cursor-pointer" 
+                          id="new-contact" 
+                          name="contact-type" 
+                          type="radio" 
+                          value="new"
+                        />
+                      </div>
+                      <label className="font-bold text-slate-700 text-sm whitespace-nowrap cursor-pointer hover:text-slate-900" htmlFor="new-contact">New Customer</label>
                     </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight" htmlFor="phone">Phone Number</label>
-                    <div className="relative rounded-lg shadow-sm">
+                  
+                  {formData.contactType === 'existing' && (
+                    <div className="w-full mt-6 relative">
                       <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                        <span className="material-symbols-outlined text-slate-400" style={{ fontSize: '20px' }}>phone</span>
+                        <span className="material-symbols-outlined text-slate-400" style={{ fontSize: '18px' }}>search</span>
                       </div>
-                      <input 
-                        className="block w-full h-12 rounded-lg border-slate-200 pl-11 focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium" 
-                        id="phone" 
-                        name="phone" 
-                        type="tel" 
-                        value={formData.phone}
-                        onChange={handleChange}
-                        placeholder="+61 XXX XXX XXX"
-                      />
+                      <input className="block w-full h-11 rounded-lg border-slate-200 pl-11 focus:border-primary focus:ring focus:ring-primary/10 sm:text-sm shadow-sm font-medium" id="contact-search" name="contact-search" placeholder="Search by name, email or phone..." type="text"/>
                     </div>
-                  </div>
+                  )}
                 </div>
+
+                {formData.contactType === 'new' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight" htmlFor="email">Email Address</label>
+                      <div className="relative rounded-lg shadow-sm">
+                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                          <span className="material-symbols-outlined text-slate-400" style={{ fontSize: '20px' }}>email</span>
+                        </div>
+                        <input 
+                          className="block w-full h-12 rounded-lg border-slate-200 pl-11 focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium" 
+                          id="email" 
+                          name="email" 
+                          type="email" 
+                          value={formData.email}
+                          onChange={handleChange}
+                          placeholder="customer@email.com"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight" htmlFor="phone">Phone Number</label>
+                      <div className="relative rounded-lg shadow-sm">
+                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                          <span className="material-symbols-outlined text-slate-400" style={{ fontSize: '20px' }}>phone</span>
+                        </div>
+                        <input 
+                          className="block w-full h-12 rounded-lg border-slate-200 pl-11 focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium" 
+                          id="phone" 
+                          name="phone" 
+                          type="tel" 
+                          value={formData.phone}
+                          onChange={handleChange}
+                          placeholder="+61 XXX XXX XXX"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -309,96 +381,100 @@ export default function EditBookingPage() {
                       </div>
                       <label className="font-bold text-slate-700 text-sm whitespace-nowrap cursor-pointer hover:text-slate-900" htmlFor="new-customer">New Traveller</label>
                     </div>
-                    <div className="w-full sm:flex-1 sm:ml-6 relative">
-                      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                        <span className="material-symbols-outlined text-slate-400" style={{ fontSize: '18px' }}>search</span>
+                    {formData.customerType === 'existing' && (
+                      <div className="w-full mt-6 relative">
+                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                          <span className="material-symbols-outlined text-slate-400" style={{ fontSize: '18px' }}>search</span>
+                        </div>
+                        <input className="block w-full h-11 rounded-lg border-slate-200 pl-11 focus:border-primary focus:ring focus:ring-primary/10 sm:text-sm shadow-sm font-medium" id="customer-search" name="customer-search" placeholder="Search by name, email or phone..." type="text"/>
                       </div>
-                      <input className="block w-full h-11 rounded-lg border-slate-200 pl-11 focus:border-primary focus:ring focus:ring-primary/10 sm:text-sm shadow-sm font-medium" id="customer-search" name="customer-search" placeholder="Search by name, email or phone..." type="text"/>
-                    </div>
+                    )}
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="col-span-1">
-                    <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight">First Name</label>
-                    <input 
-                      className="block w-full h-12 rounded-lg border-slate-200 shadow-sm focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium pl-4" 
-                      name="travellerFirstName" 
-                      type="text" 
-                      value={formData.travellerFirstName}
-                      onChange={handleChange}
-                      placeholder="e.g. John"
-                    />
-                  </div>
-                  <div className="col-span-1">
-                    <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight">Last Name</label>
-                    <input 
-                      className="block w-full h-12 rounded-lg border-slate-200 shadow-sm focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium pl-4" 
-                      name="travellerLastName" 
-                      type="text" 
-                      value={formData.travellerLastName}
-                      onChange={handleChange}
-                      placeholder="e.g. Doe"
-                    />
-                  </div>
-                  <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8 p-6 bg-slate-50/50 rounded-xl border border-slate-100">
-                    <div>
-                      <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight" htmlFor="passport-number">Passport Number</label>
-                      <div className="relative rounded-lg shadow-sm">
-                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                          <span className="material-symbols-outlined text-slate-400" style={{ fontSize: '20px' }}>badge</span>
+                {formData.customerType === 'new' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="col-span-1">
+                      <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight">First Name</label>
+                      <input 
+                        className="block w-full h-12 rounded-lg border-slate-200 shadow-sm focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium pl-4" 
+                        name="travellerFirstName" 
+                        type="text" 
+                        value={formData.travellerFirstName}
+                        onChange={handleChange}
+                        placeholder="e.g. John"
+                      />
+                    </div>
+                    <div className="col-span-1">
+                      <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight">Last Name</label>
+                      <input 
+                        className="block w-full h-12 rounded-lg border-slate-200 shadow-sm focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium pl-4" 
+                        name="travellerLastName" 
+                        type="text" 
+                        value={formData.travellerLastName}
+                        onChange={handleChange}
+                        placeholder="e.g. Doe"
+                      />
+                    </div>
+                    <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8 p-6 bg-slate-50/50 rounded-xl border border-slate-100">
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight" htmlFor="passport-number">Passport Number</label>
+                        <div className="relative rounded-lg shadow-sm">
+                          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                            <span className="material-symbols-outlined text-slate-400" style={{ fontSize: '20px' }}>badge</span>
+                          </div>
+                          <input 
+                            className="block w-full h-12 rounded-lg border-slate-200 pl-11 focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium" 
+                            id="passport-number" 
+                            name="passportNumber" 
+                            placeholder="e.g. A1234567X" 
+                            type="text"
+                            value={formData.passportNumber}
+                            onChange={handleChange}
+                          />
                         </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight" htmlFor="passport-expiry">Passport Expiry Date</label>
                         <input 
-                          className="block w-full h-12 rounded-lg border-slate-200 pl-11 focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium" 
-                          id="passport-number" 
-                          name="passportNumber" 
-                          placeholder="e.g. A1234567X" 
-                          type="text"
-                          value={formData.passportNumber}
+                          className="block w-full h-12 rounded-lg border-slate-200 shadow-sm focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium px-4" 
+                          id="passport-expiry" 
+                          name="passportExpiry" 
+                          type="date"
+                          value={formData.passportExpiry}
                           onChange={handleChange}
                         />
                       </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight" htmlFor="passport-expiry">Passport Expiry Date</label>
-                      <input 
-                        className="block w-full h-12 rounded-lg border-slate-200 shadow-sm focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium px-4" 
-                        id="passport-expiry" 
-                        name="passportExpiry" 
-                        type="date"
-                        value={formData.passportExpiry}
-                        onChange={handleChange}
-                      />
+                    <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8 p-6 bg-slate-50/50 rounded-xl border border-slate-100">
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight" htmlFor="nationality">Nationality</label>
+                        <select 
+                          className="block w-full h-12 rounded-lg border-slate-200 shadow-sm focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium px-4" 
+                          id="nationality" 
+                          name="nationality"
+                          value={formData.nationality}
+                          onChange={handleChange}
+                        >
+                          <option>Australian</option>
+                          <option value="Nepalese">Nepalese</option>
+                          <option>Singaporean</option>
+                          <option>American</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight" htmlFor="dob">Date of Birth</label>
+                        <input 
+                          className="block w-full h-12 rounded-lg border-slate-200 shadow-sm focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium px-4" 
+                          id="dob" 
+                          name="dob" 
+                          type="date" 
+                          value={formData.dob}
+                          onChange={handleChange}
+                        />
+                      </div>
                     </div>
                   </div>
-                  <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8 p-6 bg-slate-50/50 rounded-xl border border-slate-100">
-                    <div>
-                      <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight" htmlFor="nationality">Nationality</label>
-                      <select 
-                        className="block w-full h-12 rounded-lg border-slate-200 shadow-sm focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium px-4" 
-                        id="nationality" 
-                        name="nationality"
-                        value={formData.nationality}
-                        onChange={handleChange}
-                      >
-                        <option>Australian</option>
-                        <option value="Nepalese">Nepalese</option>
-                        <option>Singaporean</option>
-                        <option>American</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-bold text-slate-700 mb-2 tracking-tight" htmlFor="dob">Date of Birth</label>
-                      <input 
-                        className="block w-full h-12 rounded-lg border-slate-200 shadow-sm focus:border-primary focus:ring focus:ring-primary/10 transition-all sm:text-sm font-medium px-4" 
-                        id="dob" 
-                        name="dob" 
-                        type="date" 
-                        value={formData.dob}
-                        onChange={handleChange}
-                      />
-                    </div>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
 
@@ -633,7 +709,7 @@ export default function EditBookingPage() {
                         <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                           <span className="text-slate-400 font-bold sm:text-xs">$</span>
                         </div>
-                        <input className="block w-full h-10 rounded-lg border-slate-200 pl-7 text-right focus:border-primary focus:ring focus:ring-primary/10 sm:text-sm font-bold text-slate-700" name="price-meals" placeholder="0.00" type="number"/>
+                        <input className="block w-full h-10 rounded-lg border-slate-200 pl-7 text-right focus:border-primary focus:ring focus:ring-primary/10 sm:text-sm font-bold text-slate-700" name="price-meals" value={formData.prices?.meals || ""} onChange={handleChange} placeholder="0.00" type="number"/>
                       </div>
                     </div>
                     {/* Simplified remaining addons */}
@@ -652,12 +728,12 @@ export default function EditBookingPage() {
                         <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                           <span className="text-slate-400 font-bold sm:text-xs">$</span>
                         </div>
-                        <input className="block w-full h-10 rounded-lg border-slate-200 pl-7 text-right focus:border-primary focus:ring focus:ring-primary/10 sm:text-sm font-bold text-slate-700" name="price-wheelchair" placeholder="0.00" type="number"/>
+                        <input className="block w-full h-10 rounded-lg border-slate-200 pl-7 text-right focus:border-primary focus:ring focus:ring-primary/10 sm:text-sm font-bold text-slate-700" name="price-wheelchair" value={formData.prices?.wheelchair || ""} onChange={handleChange} placeholder="0.00" type="number"/>
                       </div>
                     </div>
                     <div className="pt-6 mt-2 border-t border-slate-100 flex items-center justify-between">
                       <span className="text-sm font-bold text-slate-500 uppercase tracking-wider">Add-ons Subtotal</span>
-                      <div className="text-xl font-black text-primary">$25.00</div>
+                      <div className="text-xl font-black text-primary">${calculateAddonsTotal()}</div>
                     </div>
                   </div>
                   <div className="space-y-8">
